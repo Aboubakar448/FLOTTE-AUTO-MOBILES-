@@ -1,0 +1,7 @@
+{
+  "vehicles": [],
+  "documents": [],
+  "docTypes": ["Carte grise", "Carte bleue", "Assurance", "Licence de transport", "Conformité fiscale"],
+  "chauffeurs": [],
+  "sinistres": []
+}
