@@ -25,6 +25,7 @@ function seedDefaultAdmin() {
 }
 
 function normalizeUser(u) {
+  // rétrocompatibilité pour les comptes créés avant l'ajout des privilèges
   return {
     ...u,
     canEdit: u.isAdmin ? true : (u.canEdit !== false),
@@ -90,4 +91,12 @@ function removeUser(username) {
   saveUsers(users.filter(u => u.username !== username));
 }
 
-module.exports = { loadUsers, findUser, publicUsers, addUser, removeUser, ALL_PAGE_KEYS };
+function setPassword(username, newPassword) {
+  const users = loadUsers();
+  const target = users.find(u => u.username === username);
+  if (!target) throw new Error('Utilisateur introuvable.');
+  target.password = newPassword;
+  saveUsers(users);
+}
+
+module.exports = { loadUsers, saveUsers, findUser, publicUsers, addUser, removeUser, setPassword, ALL_PAGE_KEYS };
