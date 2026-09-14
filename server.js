@@ -9,7 +9,7 @@ const lock = require('./lock');
 
 const app = express();
 app.use(express.json({ limit: '5mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'publique')));
 
 const DATA_FILE = path.join(__dirname, 'data.json');
 const DEFAULT_DOC_TYPES = ["Carte grise", "Carte bleue", "Assurance", "Licence de transport", "Conformité fiscale"];
