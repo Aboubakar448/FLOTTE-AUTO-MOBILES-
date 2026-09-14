@@ -1,0 +1,2587 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suivi documentaire — Flotte</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Public+Sans:wght@400;500;600;700&display=swap');
+
+  :root{
+    --asphalt: #1B2430;
+    --asphalt-2: #262F3D;
+    --teal: #2F6F5E;
+    --teal-light: #DCEAE5;
+    --amber: #C98A2C;
+    --amber-light: #F6E6CC;
+    --red: #A9382C;
+    --red-light: #F3DAD5;
+    --paper: #F1EFE8;
+    --paper-2: #E7E4DA;
+    --line: #D8D4C7;
+    --ink: #1B2430;
+    --ink-soft: #5B6270;
+    --white: #FFFFFF;
+    --radius: 10px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  html{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  body{
+    font-family:'Public Sans', sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    min-height:100vh;
+  }
+
+  h1,h2,h3,.brand,.stat-num{
+    font-family:'Archivo', sans-serif;
+  }
+
+  .app{
+    display:flex;
+    min-height:100vh;
+  }
+
+  /* SIDEBAR */
+  .sidebar{
+    width:230px;
+    flex-shrink:0;
+    background:var(--asphalt);
+    color:var(--white);
+    display:flex;
+    flex-direction:column;
+    padding:20px 16px;
+    transition:width .18s ease, padding .18s ease;
+    position:relative;
+  }
+  .sidebar.collapsed{
+    width:64px;
+    padding:20px 10px;
+  }
+  .sidebar-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+  }
+  .sidebar-toggle{
+    all:unset;
+    cursor:pointer;
+    width:30px;
+    height:30px;
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:7px;
+    color:#C7CCD6;
+  }
+  .sidebar-toggle:hover{background:#2A3444; color:var(--white);}
+  .brand{
+    font-size:19px;
+    font-weight:800;
+    letter-spacing:0.2px;
+    line-height:1.15;
+    margin:0;
+    white-space:nowrap;
+    overflow:hidden;
+  }
+  .sidebar.collapsed .brand{display:none;}
+  .brand small{
+    display:block;
+    font-family:'Public Sans', sans-serif;
+    font-weight:500;
+    font-size:12px;
+    color:#9AA3B2;
+    margin-top:4px;
+  }
+  nav{margin-top:28px; display:flex; flex-direction:column; gap:4px;}
+  .nav-btn{
+    all:unset;
+    cursor:pointer;
+    padding:10px 12px;
+    border-radius:8px;
+    font-size:14.5px;
+    font-weight:600;
+    color:#C7CCD6;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    transition:background .15s ease, color .15s ease;
+    white-space:nowrap;
+    overflow:hidden;
+  }
+  .sidebar.collapsed .nav-btn{justify-content:center; padding:10px 0;}
+  .sidebar.collapsed .nav-btn .label{display:none;}
+  .nav-btn:hover{background:#2A3444; color:var(--white);}
+  .nav-btn.active{background:var(--teal); color:var(--white);}
+  .nav-dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.85;flex-shrink:0;}
+
+  .sidebar-foot{
+    margin-top:auto;
+    padding-top:20px;
+    border-top:1px solid #313B4C;
+    font-size:12px;
+    color:#8891A0;
+    line-height:1.5;
+    white-space:nowrap;
+    overflow:hidden;
+  }
+  .sidebar.collapsed .sidebar-foot{display:none;}
+
+  /* MAIN */
+  main{
+    flex:1;
+    padding:32px 40px 60px;
+    max-width:1080px;
+  }
+  .page-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    margin-bottom:26px;
+    gap:20px;
+    flex-wrap:wrap;
+  }
+  .page-head h1{
+    font-size:24px;
+    font-weight:800;
+    margin:0 0 6px;
+  }
+  .page-head p{
+    margin:0;
+    color:var(--ink-soft);
+    font-size:14px;
+  }
+  .today-chip{
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:7px 14px;
+    font-size:13px;
+    color:var(--ink-soft);
+    font-weight:600;
+    white-space:nowrap;
+  }
+
+  /* STAT CARDS */
+  .stats{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:14px;
+    margin-bottom:28px;
+  }
+  .stat-card{
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px 18px;
+  }
+  .stat-num{font-size:28px; font-weight:800; line-height:1;}
+  .stat-label{font-size:12.5px; color:var(--ink-soft); margin-top:6px; font-weight:600;}
+  .stat-card.valide .stat-num{color:var(--teal);}
+  .stat-card.attention .stat-num{color:var(--amber);}
+  .stat-card.expire .stat-num{color:var(--red);}
+
+  /* SECTIONS */
+  .section{
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:22px 24px;
+    margin-bottom:22px;
+  }
+  .section-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:16px;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .section-head h2{
+    font-size:16px;
+    font-weight:700;
+    margin:0;
+  }
+  .search{
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:8px 12px;
+    font-size:13.5px;
+    font-family:inherit;
+    width:220px;
+    background:var(--paper);
+  }
+  .search:focus{outline:2px solid var(--teal); outline-offset:1px;}
+
+  /* TABLE */
+  table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  thead th{
+    text-align:left;
+    font-size:11.5px;
+    font-weight:700;
+    color:var(--ink-soft);
+    padding:0 10px 10px;
+    border-bottom:1px solid var(--line);
+  }
+  tbody td{
+    padding:12px 10px;
+    border-bottom:1px solid #EDEAE0;
+    vertical-align:middle;
+  }
+  tbody tr:last-child td{border-bottom:none;}
+  .empty-row td{
+    text-align:center;
+    color:var(--ink-soft);
+    padding:28px 10px;
+    font-size:13.5px;
+  }
+
+  .plate{
+    display:inline-block;
+    background:var(--asphalt);
+    color:var(--white);
+    font-family:'Archivo', sans-serif;
+    font-weight:700;
+    font-size:13px;
+    letter-spacing:0.5px;
+    padding:5px 10px;
+    border-radius:5px;
+    border:2px solid #0F151D;
+  }
+
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:4px 10px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:700;
+  }
+  .badge.valide{background:var(--teal-light); color:#1E4F42;}
+  .badge.attention{background:var(--amber-light); color:#8A5D1B;}
+  .badge.expire{background:var(--red-light); color:#7C281E;}
+  .badge-dot{width:6px;height:6px;border-radius:50%;background:currentColor;}
+
+  /* EXCEL-STYLE TABLE */
+  .filters-row{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .xl-wrap{
+    overflow-x:auto;
+    border:1px solid var(--asphalt);
+    border-radius:6px;
+  }
+  table.xl-table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13px;
+    min-width:760px;
+  }
+  .xl-table thead th{
+    background:var(--asphalt);
+    color:var(--white);
+    font-weight:700;
+    font-size:11.5px;
+    text-align:left;
+    padding:9px 12px;
+    border:1px solid #0F151D;
+    white-space:nowrap;
+  }
+  .xl-table tbody td{
+    padding:8px 12px;
+    border:1px solid var(--line);
+    color:var(--ink);
+  }
+  .xl-table tbody tr.xl-valide{background:var(--teal-light);}
+  .xl-table tbody tr.xl-attention{background:var(--amber-light);}
+  .xl-table tbody tr.xl-expire{background:var(--red-light);}
+  .xl-table tbody tr.xl-valide td.xl-status{color:#1E4F42; font-weight:700;}
+  .xl-table tbody tr.xl-attention td.xl-status{color:#8A5D1B; font-weight:700;}
+  .xl-table tbody tr.xl-expire td.xl-status{color:#7C281E; font-weight:700;}
+  .xl-legend{
+    display:flex;
+    gap:16px;
+    flex-wrap:wrap;
+    margin-top:14px;
+    font-size:12.5px;
+    color:var(--ink-soft);
+  }
+  .xl-legend span{display:inline-flex; align-items:center; gap:6px;}
+  .xl-swatch{width:12px; height:12px; border-radius:3px; display:inline-block;}
+
+  /* IMPRESSION */
+  .print-header{display:none;}
+  .radio-row{display:flex; gap:14px; flex-wrap:wrap; align-items:center; font-size:13.5px;}
+  .radio-row label{display:flex; align-items:center; gap:6px; font-weight:500; color:var(--ink); cursor:pointer;}
+  .radio-row input[type="radio"]{margin:0;}
+
+  @media print{
+    .sidebar, .no-print{display:none !important;}
+    .app{display:block;}
+    main{padding:0; max-width:none;}
+    body{background:#fff;}
+    .section{border:none; box-shadow:none; padding:0; margin-bottom:18px;}
+    .print-header{display:block; margin-bottom:18px;}
+    .print-header h1{margin:0 0 4px; font-size:20px;}
+    .print-header p{margin:0; color:var(--ink-soft); font-size:12.5px;}
+    .xl-wrap{border:1px solid #000; overflow:visible;}
+    table.xl-table{min-width:0;}
+  }
+
+
+  .row-actions{display:flex; gap:6px;}
+  .icon-btn{
+    all:unset;
+    cursor:pointer;
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--ink-soft);
+    padding:5px 9px;
+    border-radius:6px;
+    border:1px solid var(--line);
+  }
+  .icon-btn:hover{background:var(--paper); color:var(--ink);}
+  .icon-btn.danger:hover{background:var(--red-light); color:var(--red); border-color:#E6C3BC;}
+
+  /* VEHICLE CARDS */
+  .vehicle-card{
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:18px 20px;
+    margin-bottom:14px;
+  }
+  .vehicle-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:14px;
+  }
+  .vehicle-id{display:flex; align-items:center; gap:12px;}
+  .vehicle-name{font-weight:700; font-size:14.5px;}
+  .vehicle-name span{display:block; font-weight:500; font-size:12.5px; color:var(--ink-soft); margin-top:1px;}
+  .vehicle-docs{display:flex; flex-direction:column; gap:8px;}
+  .doc-line{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:9px 12px;
+    background:var(--paper);
+    border-radius:8px;
+    font-size:13px;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .doc-line-left{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .doc-type{font-weight:600;}
+  .doc-date{color:var(--ink-soft);}
+  .no-docs{font-size:13px; color:var(--ink-soft); font-style:italic; padding:6px 2px;}
+
+  /* FORMS */
+  .form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+    max-width:640px;
+  }
+  .form-grid.full{grid-template-columns:1fr;}
+  .field{display:flex; flex-direction:column; gap:6px;}
+  .field.span-2{grid-column:1 / -1;}
+  label{font-size:12.5px; font-weight:700; color:var(--ink-soft);}
+  input, select, textarea{
+    font-family:inherit;
+    font-size:14px;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:var(--paper);
+    color:var(--ink);
+  }
+  input:focus, select:focus, textarea:focus{outline:2px solid var(--teal); outline-offset:1px;}
+  textarea{resize:vertical; min-height:70px;}
+
+  .form-actions{
+    margin-top:20px;
+    display:flex;
+    gap:10px;
+    align-items:center;
+  }
+  .btn{
+    all:unset;
+    cursor:pointer;
+    padding:10px 18px;
+    border-radius:8px;
+    font-size:14px;
+    font-weight:700;
+    text-align:center;
+  }
+  .btn-primary{background:var(--teal); color:var(--white);}
+  .btn-primary:hover{background:#265B4D;}
+  .btn-ghost{color:var(--ink-soft); border:1px solid var(--line);}
+  .btn-ghost:hover{background:var(--paper);}
+  .form-msg{font-size:13px; color:var(--teal); font-weight:600;}
+
+  .hint{font-size:12px; color:var(--ink-soft); margin-top:-8px; margin-bottom:4px;}
+
+  .loading, .save-flag{
+    font-size:12.5px;
+    color:var(--ink-soft);
+  }
+
+  /* LOGIN */
+  .login-screen{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:var(--asphalt);
+    padding:20px;
+  }
+  .login-card{
+    background:var(--white);
+    border-radius:var(--radius);
+    padding:36px 32px;
+    width:100%;
+    max-width:360px;
+  }
+  .login-card .brand{
+    color:var(--ink);
+    font-size:20px;
+    margin-bottom:4px;
+  }
+  .login-card p{
+    color:var(--ink-soft);
+    font-size:13.5px;
+    margin:0 0 22px;
+  }
+  .login-card .field{margin-bottom:16px;}
+  .login-error{
+    color:var(--red);
+    font-size:13px;
+    font-weight:600;
+    margin:0 0 14px;
+  }
+  .login-card .btn-primary{width:100%;}
+
+  @media (max-width: 860px){
+    .app{flex-direction:column;}
+    .sidebar, .sidebar.collapsed{width:100%; flex-direction:row; align-items:center; padding:14px 18px;}
+    .sidebar.collapsed .brand{display:block;}
+    .sidebar-foot{display:none;}
+    nav{flex-direction:row; margin-top:0; margin-left:auto; flex-wrap:wrap;}
+    .sidebar.collapsed .nav-btn .label{display:inline;}
+    .sidebar-toggle{display:none;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+    main{padding:22px 18px 50px;}
+    .form-grid{grid-template-columns:1fr;}
+    table, thead, tbody, th, td, tr{display:block;}
+    thead{display:none;}
+    tbody tr{
+      border:1px solid var(--line);
+      border-radius:8px;
+      margin-bottom:10px;
+      padding:10px 12px;
+    }
+    tbody td{border-bottom:none; padding:6px 0;}
+  }
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script>
+const DEFAULT_DOC_TYPES = ["Carte grise","Carte bleue","Assurance","Licence de transport","Conformité fiscale"];
+const SINISTRE_TYPES = ["Collision","Vol / Vandalisme","Incendie","Bris de glace","Catastrophe naturelle","Panne mécanique","Autre"];
+const SINISTRE_STATUTS = ["Déclaré","En cours de traitement","Clôturé"];
+const ALL_PAGE_KEYS = [
+  ["dashboard","Tableau de bord"],
+  ["vehicules","Véhicules"],
+  ["documents","Documents"],
+  ["rapport-peremption","Rapport de péremption"],
+  ["sinistres","Sinistres"],
+  ["statistiques-sinistres","Statistiques sinistres"],
+  ["chauffeurs","Chauffeurs"],
+];
+const ALERT_WINDOW = 30; // jours
+
+let state = {
+  vehicles: [],
+  documents: [],
+  docTypes: DEFAULT_DOC_TYPES.slice(),
+  chauffeurs: [],
+  sinistres: [],
+  tab: "dashboard",
+  search: "",
+  docTypeFilter: "",
+  sidebarOpen: false,
+  loaded: false,
+  saving: false,
+  editingVehicleId: null,
+  editingDocumentId: null,
+  editingChauffeurId: null,
+  editingSinistreId: null,
+  vehicleFormMsg: "",
+  docFormMsg: "",
+  typeFormMsg: "",
+  chauffeurFormMsg: "",
+  sinistreFormMsg: "",
+  sinistreFilterVehicle: "",
+  sinistreFilterChauffeur: "",
+  sinistreFilterStatut: "",
+  rapportTypeFilter: "",
+  rapportProprietaire: "",
+  rapportSeuil: "30",
+  rapportDateCustom: "",
+  rapportStatutFilter: "",
+  authed: false,
+  authChecking: true,
+  loginError: "",
+  currentUser: null,
+  onedrive: null,
+  onedriveMsg: "",
+  presenceList: [],
+  historyList: [],
+  usersList: [],
+  userFormMsg: "",
+  pendingUnlocks: [],
+  bulkSelectedIds: [],
+  bulkSearch: "",
+  bulkDocType: "",
+  bulkDateEmission: "",
+  bulkDateExpiration: "",
+  bulkReference: "",
+  bulkAssureur: "",
+  bulkMsg: ""
+};
+
+function canEdit(){
+  return !!(state.currentUser && (state.currentUser.isAdmin || state.currentUser.canEdit));
+}
+
+function pageAllowed(key){
+  if(!state.currentUser) return false;
+  if(state.currentUser.isAdmin) return true;
+  return (state.currentUser.allowedPages || []).includes(key);
+}
+
+function hasPendingUnlock(kind, id){
+  return state.pendingUnlocks.some(u => u.kind===kind && u.id===id);
+}
+
+async function requestUnlock(kind, id, label){
+  if(hasPendingUnlock(kind, id)) return true;
+  const password = window.prompt(`« ${label} » est protégé par un mot de passe. Entrez-le pour continuer :`);
+  if(password === null) return false;
+  try{
+    const res = await fetch('/api/unlock-check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ kind, id, password })
+    });
+    const data = await res.json();
+    if(data.ok){
+      state.pendingUnlocks.push({ kind, id, password });
+      return true;
+    }
+    alert("Mot de passe incorrect.");
+    return false;
+  }catch(e){
+    alert("Erreur de vérification du mot de passe.");
+    return false;
+  }
+}
+
+function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
+
+function daysUntil(dateStr){
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const target = new Date(dateStr + "T00:00:00");
+  return Math.round((target - today) / 86400000);
+}
+
+function statusFor(dateStr, thresholdDays = ALERT_WINDOW){
+  const d = daysUntil(dateStr);
+  if(d < 0) return "expire";
+  if(d <= thresholdDays) return "attention";
+  return "valide";
+}
+
+function statusLabel(dateStr, thresholdDays = ALERT_WINDOW){
+  const d = daysUntil(dateStr);
+  const s = statusFor(dateStr, thresholdDays);
+  if(s === "expire") return `Expiré depuis ${Math.abs(d)} j`;
+  if(s === "attention") return d === 0 ? "Expire aujourd'hui" : `Dans ${d} j`;
+  return `Dans ${d} j`;
+}
+
+function fmtDate(dateStr){
+  const d = new Date(dateStr + "T00:00:00");
+  return d.toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+function getCreds(){
+  try{
+    return JSON.parse(localStorage.getItem('flotte-creds') || 'null') || { username: '', password: '' };
+  }catch(e){
+    return { username: '', password: '' };
+  }
+}
+
+function authHeaders(){
+  const c = getCreds();
+  return { 'x-username': c.username, 'x-password': c.password };
+}
+
+async function apiGet(){
+  const res = await fetch('/api/data', { headers: authHeaders() });
+  if(res.status === 401) throw { unauthorized: true };
+  if(!res.ok) throw new Error('Erreur serveur');
+  return res.json();
+}
+
+async function apiSave(){
+  const res = await fetch('/api/data', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({ vehicles: state.vehicles, documents: state.documents, docTypes: state.docTypes, chauffeurs: state.chauffeurs, sinistres: state.sinistres, unlocks: state.pendingUnlocks })
+  });
+  if(res.status === 401) throw { unauthorized: true };
+  if(res.status === 403) throw { forbidden: true };
+  if(res.status === 423){ const body = await res.json().catch(() => ({})); throw { locked: true, message: body.message }; }
+  if(!res.ok) throw new Error('Erreur serveur');
+  return res.json();
+}
+
+async function tryLogin(username, password){
+  const res = await fetch('/api/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  });
+  if(!res.ok) return null;
+  const data = await res.json();
+  return data.ok ? data.user : null;
+}
+
+let heartbeatTimer = null;
+function startHeartbeat(){
+  if(heartbeatTimer) return;
+  heartbeatTimer = setInterval(() => {
+    fetch('/api/ping', { method: 'POST', headers: authHeaders() }).catch(() => {});
+  }, 20000);
+}
+function stopHeartbeat(){
+  if(heartbeatTimer){ clearInterval(heartbeatTimer); heartbeatTimer = null; }
+}
+
+async function loadData(){
+  try{
+    const data = await apiGet();
+    state.vehicles = data.vehicles || [];
+    state.documents = data.documents || [];
+    state.docTypes = (data.docTypes && data.docTypes.length) ? data.docTypes : DEFAULT_DOC_TYPES.slice();
+    state.chauffeurs = data.chauffeurs || [];
+    state.sinistres = data.sinistres || [];
+    state.authed = true;
+    startHeartbeat();
+    if(!state.currentUser){
+      try{
+        const meRes = await fetch('/api/me', { headers: authHeaders() });
+        if(meRes.ok){ state.currentUser = (await meRes.json()).user; }
+      }catch(e){ /* pas grave, l'interface fonctionnera avec un nom générique */ }
+    }
+    if(!pageAllowed(state.tab) && state.tab === "dashboard"){
+      const firstAllowed = ALL_PAGE_KEYS.find(([k]) => pageAllowed(k));
+      if(firstAllowed) state.tab = firstAllowed[0];
+    }
+  }catch(e){
+    if(e && e.unauthorized){
+      localStorage.removeItem('flotte-creds');
+      state.authed = false;
+      state.currentUser = null;
+      stopHeartbeat();
+    }else{
+      console.error("Erreur de chargement", e);
+    }
+  }
+  state.loaded = true;
+  state.authChecking = false;
+  render();
+}
+
+async function saveData(){
+  state.saving = true;
+  render();
+  try{
+    await apiSave();
+    state.pendingUnlocks = [];
+  }catch(e){
+    if(e && e.unauthorized){
+      localStorage.removeItem('flotte-creds');
+      state.authed = false;
+      state.currentUser = null;
+      stopHeartbeat();
+    }else if(e && e.forbidden){
+      alert("Votre compte est en consultation seule : cette modification n'a pas été enregistrée.");
+    }else if(e && e.locked){
+      alert(e.message || "Cet enregistrement est protégé par un mot de passe.");
+    }else{
+      console.error("Erreur d'enregistrement", e);
+    }
+  }
+  state.saving = false;
+  render();
+}
+
+async function loadOnedriveStatus(){
+  try{
+    const res = await fetch('/api/onedrive/status', { headers: authHeaders() });
+    if(res.ok){
+      state.onedrive = await res.json();
+    }
+  }catch(e){
+    console.error("Erreur de statut OneDrive", e);
+  }
+  render();
+}
+
+async function loadUsers(){
+  try{
+    const res = await fetch('/api/users', { headers: authHeaders() });
+    if(res.ok){ state.usersList = (await res.json()).users || []; }
+  }catch(e){
+    console.error("Erreur de chargement des utilisateurs", e);
+  }
+  render();
+}
+
+async function loadPresence(){
+  try{
+    const res = await fetch('/api/presence', { headers: authHeaders() });
+    if(res.ok){ state.presenceList = (await res.json()).users || []; }
+  }catch(e){
+    console.error("Erreur de chargement de la présence", e);
+  }
+  render();
+}
+
+async function loadHistory(){
+  try{
+    const res = await fetch('/api/history?limit=150', { headers: authHeaders() });
+    if(res.ok){ state.historyList = (await res.json()).history || []; }
+  }catch(e){
+    console.error("Erreur de chargement de l'historique", e);
+  }
+  render();
+}
+
+function setTab(tab){
+  state.tab = tab;
+  state.editingVehicleId = null;
+  state.editingDocumentId = null;
+  state.editingChauffeurId = null;
+  state.editingSinistreId = null;
+  state.vehicleFormMsg = "";
+  state.docFormMsg = "";
+  state.chauffeurFormMsg = "";
+  state.sinistreFormMsg = "";
+  render();
+  if(tab === "maj-groupee" && !state.bulkDocType){ state.bulkDocType = state.docTypes[0] || ""; render(); }
+  if(tab === "sauvegarde") loadOnedriveStatus();
+  if(tab === "utilisateurs") loadUsers();
+  if(tab === "presence") loadPresence();
+  if(tab === "historique") loadHistory();
+}
+
+function docsForVehicle(vId){
+  return state.documents.filter(d => d.vehicleId === vId);
+}
+
+function allDocsWithVehicle(){
+  return state.documents.map(d => ({ ...d, vehicle: state.vehicles.find(v => v.id === d.vehicleId) }))
+    .filter(d => d.vehicle);
+}
+
+function chauffeurName(id){
+  const c = state.chauffeurs.find(c => c.id === id);
+  return c ? c.name : '';
+}
+
+function vehicleLabel(v){
+  if(!v) return 'Véhicule supprimé';
+  return `${v.plaque} — ${v.marque} ${v.modele||''}`.trim();
+}
+
+function allSinistresWithDetails(){
+  return state.sinistres.map(s => ({
+    ...s,
+    vehicle: state.vehicles.find(v => v.id === s.vehicleId),
+    chauffeur: state.chauffeurs.find(c => c.id === s.chauffeurId)
+  }));
+}
+
+function sinistreStatutClass(statut){
+  if(statut === "Clôturé") return "valide";
+  if(statut === "En cours de traitement") return "attention";
+  return "expire";
+}
+
+function statsByVehicle(){
+  const map = new Map();
+  allSinistresWithDetails().forEach(s => {
+    const key = s.vehicleId;
+    const label = vehicleLabel(s.vehicle);
+    if(!map.has(key)) map.set(key, { label, count: 0, total: 0 });
+    const entry = map.get(key);
+    entry.count += 1;
+    entry.total += Number(s.montant) || 0;
+  });
+  return Array.from(map.values()).sort((a,b) => b.count - a.count);
+}
+
+function statsByChauffeur(){
+  const map = new Map();
+  allSinistresWithDetails().forEach(s => {
+    const key = s.chauffeurId || '—';
+    const label = s.chauffeur ? s.chauffeur.name : 'Non renseigné';
+    if(!map.has(key)) map.set(key, { label, count: 0, total: 0 });
+    const entry = map.get(key);
+    entry.count += 1;
+    entry.total += Number(s.montant) || 0;
+  });
+  return Array.from(map.values()).sort((a,b) => b.count - a.count);
+}
+
+function fmtMontant(n){
+  if(!n && n !== 0) return '—';
+  return Number(n).toLocaleString('fr-FR') + ' FCFA';
+}
+
+/* ---------- RENDER ---------- */
+
+function render(){
+  const root = document.getElementById('root');
+  if(state.authChecking){
+    root.innerHTML = `<div class="login-screen"><p class="loading" style="color:#C7CCD6;">Connexion…</p></div>`;
+    return;
+  }
+  if(!state.authed){
+    root.innerHTML = renderLogin();
+    attachLoginHandlers();
+    return;
+  }
+  root.innerHTML = `
+    <div class="app">
+      ${renderSidebar()}
+      <main>${renderMain()}</main>
+    </div>
+  `;
+  attachHandlers();
+}
+
+function renderLogin(){
+  return `
+    <div class="login-screen">
+      <div class="login-card">
+        <div class="brand">Flotte<br><small style="color:var(--ink-soft);">Suivi documentaire</small></div>
+        <p>Connectez-vous avec votre compte personnel.</p>
+        ${state.loginError ? `<p class="login-error">${escapeHtml(state.loginError)}</p>` : ''}
+        <form id="login-form">
+          <div class="field">
+            <label>Identifiant</label>
+            <input type="text" name="username" required autofocus>
+          </div>
+          <div class="field">
+            <label>Mot de passe</label>
+            <input type="password" name="password" required>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Se connecter</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+}
+
+function attachLoginHandlers(){
+  const form = document.getElementById('login-form');
+  if(form){
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      const username = fd.get('username').trim();
+      const password = fd.get('password');
+      const user = await tryLogin(username, password);
+      if(user){
+        localStorage.setItem('flotte-creds', JSON.stringify({ username, password }));
+        state.currentUser = user;
+        state.loginError = "";
+        state.authChecking = true;
+        render();
+        await loadData();
+      }else{
+        state.loginError = "Identifiant ou mot de passe incorrect.";
+        render();
+      }
+    });
+  }
+}
+
+function renderSidebar(){
+  const viewTabs = ALL_PAGE_KEYS.filter(([key]) => pageAllowed(key));
+  const editTabs = canEdit() ? [
+    ["ajouter-vehicule","Ajouter un véhicule"],
+    ["ajouter-document","Ajouter un document"],
+    ["ajouter-sinistre","Ajouter un sinistre"],
+    ["maj-groupee","Mise à jour groupée"],
+    ["types-documents","Types de documents"],
+  ] : [];
+  const tabs = [...viewTabs, ...editTabs];
+  if(state.currentUser && state.currentUser.isAdmin){
+    tabs.push(
+      ["sauvegarde","Sauvegarde OneDrive"],
+      ["utilisateurs","Utilisateurs"],
+      ["presence","Qui est en ligne"],
+      ["historique","Historique"]
+    );
+  }
+  const open = state.sidebarOpen;
+  return `
+    <div class="sidebar ${open ? '' : 'collapsed'}">
+      <div class="sidebar-head">
+        <div class="brand">Flotte<small>Suivi documentaire</small></div>
+        <button class="sidebar-toggle" id="sidebar-toggle" title="${open ? 'Réduire le menu' : 'Déployer le menu'}" aria-label="${open ? 'Réduire le menu' : 'Déployer le menu'}">
+          ${open ? '&#10094;' : '&#9776;'}
+        </button>
+      </div>
+      <nav>
+        ${tabs.map(([key,label]) => `
+          <button class="nav-btn ${state.tab===key?'active':''}" data-tab="${key}" title="${label}">
+            <span class="nav-dot"></span><span class="label">${label}</span>
+          </button>
+        `).join('')}
+      </nav>
+      <div class="sidebar-foot">
+        ${state.currentUser ? `Connecté : <strong style="color:#E7E9EE;">${escapeHtml(state.currentUser.name)}</strong>${state.currentUser.isAdmin ? ' (admin)' : ''}<br>` : ''}
+        ${state.vehicles.length} véhicule${state.vehicles.length!==1?'s':''} · ${state.documents.length} document${state.documents.length!==1?'s':''}<br>
+        ${state.saving ? "Enregistrement…" : "À jour"}
+        ${open ? `<br><button class="icon-btn" id="logout-btn" style="margin-top:8px; background:transparent; border-color:#3A4356; color:#C7CCD6;">Se déconnecter</button>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function renderMain(){
+  if(!state.loaded){
+    return `<p class="loading">Chargement des données…</p>`;
+  }
+  const viewPageKeys = ALL_PAGE_KEYS.map(([k]) => k);
+  const editOnlyTabs = ["ajouter-vehicule","ajouter-document","ajouter-sinistre","maj-groupee","types-documents"];
+  if(viewPageKeys.includes(state.tab) && !pageAllowed(state.tab)){
+    return `<div class="page-head"><div><h1>Accès non autorisé</h1><p>Votre compte n'a pas accès à cette page. Contactez un administrateur si vous pensez que c'est une erreur.</p></div></div>`;
+  }
+  if(editOnlyTabs.includes(state.tab) && !canEdit()){
+    return `<div class="page-head"><div><h1>Accès non autorisé</h1><p>Votre compte est en consultation seule et ne peut pas effectuer cette action.</p></div></div>`;
+  }
+  const adminOnlyTabs = ["sauvegarde","utilisateurs","presence","historique"];
+  if(adminOnlyTabs.includes(state.tab) && !(state.currentUser && state.currentUser.isAdmin)){
+    return `<div class="page-head"><div><h1>Accès non autorisé</h1><p>Cette page est réservée aux administrateurs.</p></div></div>`;
+  }
+  if(state.tab === "dashboard") return renderDashboard();
+  if(state.tab === "vehicules") return renderVehicules();
+  if(state.tab === "documents") return renderDocumentsListPage();
+  if(state.tab === "rapport-peremption") return renderRapportPeremption();
+  if(state.tab === "sinistres") return renderSinistres();
+  if(state.tab === "statistiques-sinistres") return renderStatistiquesSinistres();
+  if(state.tab === "chauffeurs") return renderChauffeurs();
+  if(state.tab === "ajouter-vehicule") return renderVehicleForm();
+  if(state.tab === "ajouter-document") return renderDocumentForm();
+  if(state.tab === "ajouter-sinistre") return renderSinistreForm();
+  if(state.tab === "maj-groupee") return renderMajGroupee();
+  if(state.tab === "types-documents") return renderTypesDocuments();
+  if(state.tab === "sauvegarde") return renderSauvegarde();
+  if(state.tab === "utilisateurs") return renderUtilisateurs();
+  if(state.tab === "presence") return renderPresence();
+  if(state.tab === "historique") return renderHistorique();
+  return "";
+}
+
+function renderDashboard(){
+  const all = allDocsWithVehicle();
+  const counts = { valide:0, attention:0, expire:0 };
+  all.forEach(d => counts[statusFor(d.dateExpiration)]++);
+
+  let upcoming = all.slice().sort((a,b) => daysUntil(a.dateExpiration) - daysUntil(b.dateExpiration));
+  if(state.search.trim()){
+    const q = state.search.trim().toLowerCase();
+    upcoming = upcoming.filter(d =>
+      d.vehicle.plaque.toLowerCase().includes(q) ||
+      d.vehicle.marque.toLowerCase().includes(q) ||
+      d.type.toLowerCase().includes(q)
+    );
+  }
+
+  return `
+    <div class="page-head">
+      <div>
+        <h1>Tableau de bord</h1>
+        <p>Vue d'ensemble des échéances documentaires de la flotte.</p>
+      </div>
+      <div class="today-chip">${new Date().toLocaleDateString('fr-FR',{weekday:'long', day:'2-digit', month:'long', year:'numeric'})}</div>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card"><div class="stat-num">${state.vehicles.length}</div><div class="stat-label">Véhicules</div></div>
+      <div class="stat-card valide"><div class="stat-num">${counts.valide}</div><div class="stat-label">Documents valides</div></div>
+      <div class="stat-card attention"><div class="stat-num">${counts.attention}</div><div class="stat-label">Expirent sous ${ALERT_WINDOW} j</div></div>
+      <div class="stat-card expire"><div class="stat-num">${counts.expire}</div><div class="stat-label">Documents expirés</div></div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <h2>Échéances</h2>
+        <input class="search" id="search-input" placeholder="Rechercher plaque, marque, document…" value="${escapeAttr(state.search)}">
+      </div>
+      <table>
+        <thead>
+          <tr><th>Véhicule</th><th>Document</th><th>Échéance</th><th>Statut</th></tr>
+        </thead>
+        <tbody>
+          ${upcoming.length === 0 ? `<tr class="empty-row"><td colspan="4">${state.documents.length===0 ? "Aucun document enregistré pour l'instant." : "Aucun résultat pour cette recherche."}</td></tr>` :
+          upcoming.map(d => `
+            <tr>
+              <td><span class="plate">${escapeHtml(d.vehicle.plaque)}</span> &nbsp;${escapeHtml(d.vehicle.marque)} ${escapeHtml(d.vehicle.modele||'')}</td>
+              <td>${escapeHtml(d.type)}</td>
+              <td>${fmtDate(d.dateExpiration)}</td>
+              <td><span class="badge ${statusFor(d.dateExpiration)}"><span class="badge-dot"></span>${statusLabel(d.dateExpiration)}</span></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderVehicules(){
+  let list = state.vehicles;
+  if(state.search.trim()){
+    const q = state.search.trim().toLowerCase();
+    list = list.filter(v =>
+      v.plaque.toLowerCase().includes(q) ||
+      v.marque.toLowerCase().includes(q) ||
+      (v.modele||'').toLowerCase().includes(q) ||
+      (v.proprietaire||'').toLowerCase().includes(q) ||
+      (v.categorie||'').toLowerCase().includes(q)
+    );
+  }
+
+  return `
+    <div class="page-head">
+      <div>
+        <h1>Véhicules</h1>
+        <p>Liste des véhicules et de leurs documents associés.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <h2>${state.vehicles.length} véhicule${state.vehicles.length!==1?'s':''}</h2>
+        <input class="search" id="search-input" placeholder="Rechercher par plaque, propriétaire, type…" value="${escapeAttr(state.search)}">
+      </div>
+
+      ${list.length === 0 ? `<p class="no-docs">${state.vehicles.length===0 ? "Aucun véhicule enregistré. Ajoutez-en un depuis le menu de gauche." : "Aucun résultat pour cette recherche."}</p>` :
+      list.map(v => {
+        const docs = docsForVehicle(v.id).slice().sort((a,b)=>daysUntil(a.dateExpiration)-daysUntil(b.dateExpiration));
+        return `
+        <div class="vehicle-card">
+          <div class="vehicle-top">
+            <div class="vehicle-id">
+              <span class="plate">${escapeHtml(v.plaque)}</span>
+              <div class="vehicle-name">${escapeHtml(v.marque)} ${escapeHtml(v.modele||'')}<span>${escapeHtml(v.categorie||'Véhicule')}${v.proprietaire ? ' · ' + escapeHtml(v.proprietaire) : ''}${v.chauffeurId ? ' · Chauffeur : ' + escapeHtml(chauffeurName(v.chauffeurId)) : ''}</span></div>
+              ${v.verrou && v.verrou.locked ? `<span class="badge attention" title="Protégé par mot de passe">🔒 Protégé</span>` : ''}
+            </div>
+            <div class="row-actions">
+              ${canEdit() ? `<button class="icon-btn" data-edit-vehicle="${v.id}">Modifier</button>
+              <button class="icon-btn danger" data-delete-vehicle="${v.id}">Supprimer</button>` : ''}
+              ${state.currentUser && state.currentUser.isAdmin ? (v.verrou && v.verrou.locked
+                ? `<button class="icon-btn" data-unlock-vehicle="${v.id}">Retirer la protection</button>`
+                : `<button class="icon-btn" data-lock-vehicle="${v.id}">Protéger</button>`) : ''}
+            </div>
+          </div>
+          <div class="vehicle-docs">
+            ${docs.length === 0 ? `<div class="no-docs">Aucun document enregistré pour ce véhicule.</div>` :
+            docs.map(d => `
+              <div class="doc-line">
+                <div class="doc-line-left">
+                  <span class="doc-type">${escapeHtml(d.type)}</span>
+                  ${d.verrou && d.verrou.locked ? `<span class="badge attention" title="Protégé par mot de passe">🔒</span>` : ''}
+                  ${d.assureur ? `<span class="doc-date">Assureur : ${escapeHtml(d.assureur)}</span>` : ''}
+                  <span class="doc-date">Échéance : ${fmtDate(d.dateExpiration)}</span>
+                  <span class="badge ${statusFor(d.dateExpiration)}"><span class="badge-dot"></span>${statusLabel(d.dateExpiration)}</span>
+                </div>
+                <div class="row-actions">
+                  ${canEdit() ? `<button class="icon-btn" data-edit-doc="${d.id}">Modifier</button>
+                  <button class="icon-btn danger" data-delete-doc="${d.id}">Supprimer</button>` : ''}
+                  ${state.currentUser && state.currentUser.isAdmin ? (d.verrou && d.verrou.locked
+                    ? `<button class="icon-btn" data-unlock-doc="${d.id}">Retirer la protection</button>`
+                    : `<button class="icon-btn" data-lock-doc="${d.id}">Protéger</button>`) : ''}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `}).join('')}
+    </div>
+  `;
+}
+
+function renderDocumentsListPage(){
+  let list = allDocsWithVehicle();
+
+  if(state.docTypeFilter){
+    list = list.filter(d => d.type === state.docTypeFilter);
+  }
+  if(state.search.trim()){
+    const q = state.search.trim().toLowerCase();
+    list = list.filter(d =>
+      d.vehicle.plaque.toLowerCase().includes(q) ||
+      d.vehicle.marque.toLowerCase().includes(q) ||
+      d.type.toLowerCase().includes(q) ||
+      (d.vehicle.proprietaire||'').toLowerCase().includes(q) ||
+      (d.vehicle.categorie||'').toLowerCase().includes(q)
+    );
+  }
+  list = list.slice().sort((a,b) => daysUntil(a.dateExpiration) - daysUntil(b.dateExpiration));
+
+  return `
+    <div class="page-head">
+      <div>
+        <h1>Documents</h1>
+        <p>Liste complète des documents, filtrable par type, avec code couleur.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <h2>${list.length} document${list.length!==1?'s':''}</h2>
+        <div class="filters-row">
+          <select class="search" id="type-filter-select">
+            <option value="">Tous les types</option>
+            ${state.docTypes.map(t => `<option value="${escapeAttr(t)}" ${state.docTypeFilter===t?'selected':''}>${escapeHtml(t)}</option>`).join('')}
+          </select>
+          <input class="search" id="search-input" placeholder="Rechercher par plaque, propriétaire, type de véhicule…" value="${escapeAttr(state.search)}">
+        </div>
+      </div>
+
+      <div class="xl-wrap">
+        <table class="xl-table">
+          <thead>
+            <tr>
+              <th>Plaque</th>
+              <th>Véhicule</th>
+              <th>Propriétaire</th>
+              <th>Type de document</th>
+              <th>Assureur</th>
+              <th>Référence</th>
+              <th>Émission</th>
+              <th>Péremption</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${list.length === 0 ? `<tr class="empty-row"><td colspan="9">${state.documents.length===0 ? "Aucun document enregistré pour l'instant." : "Aucun document ne correspond à ce filtre."}</td></tr>` :
+            list.map(d => `
+              <tr class="xl-${statusFor(d.dateExpiration)}">
+                <td><span class="plate">${escapeHtml(d.vehicle.plaque)}</span></td>
+                <td>${escapeHtml(d.vehicle.marque)} ${escapeHtml(d.vehicle.modele||'')}</td>
+                <td>${escapeHtml(d.vehicle.proprietaire||'—')}</td>
+                <td>${escapeHtml(d.type)}</td>
+                <td>${escapeHtml(d.assureur||'—')}</td>
+                <td>${escapeHtml(d.reference||'—')}</td>
+                <td>${d.dateEmission ? fmtDate(d.dateEmission) : '—'}</td>
+                <td>${fmtDate(d.dateExpiration)}</td>
+                <td class="xl-status">${statusLabel(d.dateExpiration)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="xl-legend">
+        <span><span class="xl-swatch" style="background:var(--teal-light)"></span>Valide</span>
+        <span><span class="xl-swatch" style="background:var(--amber-light)"></span>Expire sous ${ALERT_WINDOW} j</span>
+        <span><span class="xl-swatch" style="background:var(--red-light)"></span>Expiré</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderRapportPeremption(){
+  let thresholdDays;
+  if(state.rapportSeuil === "custom"){
+    thresholdDays = state.rapportDateCustom ? daysUntil(state.rapportDateCustom) : 30;
+  }else{
+    thresholdDays = parseInt(state.rapportSeuil, 10) || 30;
+  }
+
+  let list = allDocsWithVehicle();
+  if(state.rapportTypeFilter) list = list.filter(d => d.type === state.rapportTypeFilter);
+  if(state.rapportProprietaire.trim()){
+    const q = state.rapportProprietaire.trim().toLowerCase();
+    list = list.filter(d => (d.vehicle.proprietaire||'').toLowerCase().includes(q));
+  }
+  list = list.map(d => ({ ...d, _statut: statusFor(d.dateExpiration, thresholdDays) }));
+  if(state.rapportStatutFilter){
+    list = list.filter(d => d._statut === state.rapportStatutFilter);
+  }
+  list = list.slice().sort((a,b) => daysUntil(a.dateExpiration) - daysUntil(b.dateExpiration));
+
+  const seuilLabel = state.rapportSeuil === "custom"
+    ? (state.rapportDateCustom ? `échéance au ${fmtDate(state.rapportDateCustom)}` : "date à préciser")
+    : `${state.rapportSeuil} jours`;
+  const statutLabelMap = { valide: "Valide", attention: "Bientôt expiré", expire: "Expiré" };
+
+  return `
+    <div class="page-head no-print">
+      <div>
+        <h1>Rapport de péremption</h1>
+        <p>Consultez et imprimez un rapport des documents filtré par type, propriétaire ou statut d'échéance.</p>
+      </div>
+    </div>
+
+    <div class="print-header">
+      <h1>Rapport de péremption des documents</h1>
+      <p>Généré le ${new Date().toLocaleString('fr-FR', { day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' })} — Seuil d'alerte : ${seuilLabel}${state.rapportTypeFilter ? ' — Type : ' + escapeHtml(state.rapportTypeFilter) : ''}${state.rapportProprietaire.trim() ? ' — Propriétaire : ' + escapeHtml(state.rapportProprietaire.trim()) : ''}${state.rapportStatutFilter ? ' — Statut : ' + statutLabelMap[state.rapportStatutFilter] : ''}</p>
+    </div>
+
+    <div class="section no-print">
+      <div class="section-head"><h2>Filtres</h2></div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Type de document</label>
+          <select id="rapport-type-select">
+            <option value="">Tous les types</option>
+            ${state.docTypes.map(t => `<option value="${escapeAttr(t)}" ${state.rapportTypeFilter===t?'selected':''}>${escapeHtml(t)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field">
+          <label>Nom du propriétaire</label>
+          <input id="rapport-proprietaire-input" value="${escapeAttr(state.rapportProprietaire)}" placeholder="Ex : Jean Mbarga">
+        </div>
+        <div class="field">
+          <label>Statut d'échéance</label>
+          <select id="rapport-statut-select">
+            <option value="">Tous les statuts</option>
+            <option value="valide" ${state.rapportStatutFilter==='valide'?'selected':''}>Valide</option>
+            <option value="attention" ${state.rapportStatutFilter==='attention'?'selected':''}>Bientôt expiré</option>
+            <option value="expire" ${state.rapportStatutFilter==='expire'?'selected':''}>Expiré</option>
+          </select>
+        </div>
+        <div class="field span-2">
+          <label>Seuil de l'alerte « bientôt expiré »</label>
+          <div class="radio-row">
+            <label><input type="radio" name="rapport-seuil" value="10" ${state.rapportSeuil==='10'?'checked':''}> 10 jours</label>
+            <label><input type="radio" name="rapport-seuil" value="15" ${state.rapportSeuil==='15'?'checked':''}> 15 jours</label>
+            <label><input type="radio" name="rapport-seuil" value="30" ${state.rapportSeuil==='30'?'checked':''}> 30 jours</label>
+            <label><input type="radio" name="rapport-seuil" value="custom" ${state.rapportSeuil==='custom'?'checked':''}> Date précise :</label>
+            <input type="date" id="rapport-date-custom" value="${state.rapportDateCustom}" ${state.rapportSeuil==='custom'?'':'disabled'} style="width:auto;">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head no-print">
+        <h2>${list.length} document${list.length!==1?'s':''}</h2>
+        <button class="btn btn-primary" id="print-rapport-btn">Imprimer le rapport</button>
+      </div>
+      <div class="xl-wrap">
+        <table class="xl-table">
+          <thead>
+            <tr>
+              <th>Plaque</th>
+              <th>Véhicule</th>
+              <th>Propriétaire</th>
+              <th>Type de document</th>
+              <th>Assureur</th>
+              <th>Péremption</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${list.length === 0 ? `<tr class="empty-row"><td colspan="7">Aucun document ne correspond à ces filtres.</td></tr>` :
+            list.map(d => `
+              <tr class="xl-${d._statut}">
+                <td><span class="plate">${escapeHtml(d.vehicle.plaque)}</span></td>
+                <td>${escapeHtml(d.vehicle.marque)} ${escapeHtml(d.vehicle.modele||'')}</td>
+                <td>${escapeHtml(d.vehicle.proprietaire||'—')}</td>
+                <td>${escapeHtml(d.type)}</td>
+                <td>${escapeHtml(d.assureur||'—')}</td>
+                <td>${fmtDate(d.dateExpiration)}</td>
+                <td class="xl-status">${statusLabel(d.dateExpiration, thresholdDays)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="xl-legend no-print">
+        <span><span class="xl-swatch" style="background:var(--teal-light)"></span>Valide</span>
+        <span><span class="xl-swatch" style="background:var(--amber-light)"></span>Bientôt expiré (seuil : ${seuilLabel})</span>
+        <span><span class="xl-swatch" style="background:var(--red-light)"></span>Expiré</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderVehicleForm(){
+  const editing = state.vehicles.find(v => v.id === state.editingVehicleId);
+  return `
+    <div class="page-head">
+      <div>
+        <h1>${editing ? "Modifier le véhicule" : "Ajouter un véhicule"}</h1>
+        <p>Renseignez les informations d'identification du véhicule.</p>
+      </div>
+    </div>
+    <div class="section">
+      <form id="vehicle-form">
+        <div class="form-grid">
+          <div class="field">
+            <label>Plaque d'immatriculation *</label>
+            <input name="plaque" required value="${escapeAttr(editing?.plaque||'')}" placeholder="Ex : CE 123 AB">
+          </div>
+          <div class="field">
+            <label>Propriétaire</label>
+            <input name="proprietaire" value="${escapeAttr(editing?.proprietaire||'')}" placeholder="Ex : Jean Mbarga">
+          </div>
+          <div class="field">
+            <label>Catégorie / Type de véhicule</label>
+            <input name="categorie" value="${escapeAttr(editing?.categorie||'')}" placeholder="Ex : Camion, Berline, Bus">
+          </div>
+          <div class="field">
+            <label>Marque *</label>
+            <input name="marque" required value="${escapeAttr(editing?.marque||'')}" placeholder="Ex : Toyota">
+          </div>
+          <div class="field">
+            <label>Modèle</label>
+            <input name="modele" value="${escapeAttr(editing?.modele||'')}" placeholder="Ex : Hilux">
+          </div>
+          <div class="field">
+            <label>Chauffeur assigné</label>
+            <select name="chauffeurId">
+              <option value="">Aucun</option>
+              ${state.chauffeurs.map(c => `<option value="${c.id}" ${editing?.chauffeurId===c.id?'selected':''}>${escapeHtml(c.name)}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">${editing ? "Enregistrer les modifications" : "Ajouter le véhicule"}</button>
+          ${editing ? `<button type="button" class="btn btn-ghost" id="cancel-edit-vehicle">Annuler</button>` : ''}
+          ${state.vehicleFormMsg ? `<span class="form-msg">${state.vehicleFormMsg}</span>` : ''}
+        </div>
+      </form>
+    </div>
+  `;
+}
+
+function renderDocumentForm(){
+  const editing = state.documents.find(d => d.id === state.editingDocumentId);
+  if(state.vehicles.length === 0){
+    return `
+      <div class="page-head"><div><h1>Ajouter un document</h1><p>Aucun véhicule enregistré pour l'instant.</p></div></div>
+      <div class="section"><p class="no-docs">Ajoutez d'abord un véhicule avant d'enregistrer un document.</p></div>
+    `;
+  }
+  if(state.docTypes.length === 0){
+    return `
+      <div class="page-head"><div><h1>Ajouter un document</h1><p>Aucun type de document défini.</p></div></div>
+      <div class="section"><p class="no-docs">Ajoutez d'abord un type de document depuis l'onglet « Types de documents ».</p></div>
+    `;
+  }
+  return `
+    <div class="page-head">
+      <div>
+        <h1>${editing ? "Modifier le document" : "Ajouter un document"}</h1>
+        <p>Enregistrez un document et sa date de péremption pour un véhicule.</p>
+      </div>
+    </div>
+    <div class="section">
+      <form id="doc-form">
+        <div class="form-grid">
+          <div class="field span-2">
+            <label>Véhicule *</label>
+            <select name="vehicleId" required>
+              ${state.vehicles.map(v => `<option value="${v.id}" ${editing?.vehicleId===v.id?'selected':''}>${escapeHtml(v.plaque)} — ${escapeHtml(v.marque)} ${escapeHtml(v.modele||'')}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field">
+            <label>Type de document *</label>
+            <select name="type" id="doc-type-select" required>
+              ${state.docTypes.map(t => `<option value="${escapeAttr(t)}" ${editing?.type===t?'selected':''}>${escapeHtml(t)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field" id="assureur-field" style="display:${(editing?.type||state.docTypes[0])==='Assurance' ? 'flex':'none'};">
+            <label>Nom de l'assureur</label>
+            <input name="assureur" value="${escapeAttr(editing?.assureur||'')}" placeholder="Ex : Chanas Assurances">
+          </div>
+          <div class="field">
+            <label>Référence / numéro</label>
+            <input name="reference" value="${escapeAttr(editing?.reference||'')}" placeholder="Ex : numéro de police, N° attestation">
+          </div>
+          <div class="field">
+            <label>Date d'émission</label>
+            <input type="date" name="dateEmission" value="${editing?.dateEmission||''}">
+          </div>
+          <div class="field">
+            <label>Date de péremption *</label>
+            <input type="date" name="dateExpiration" required value="${editing?.dateExpiration||''}">
+          </div>
+          <div class="field span-2">
+            <label>Notes</label>
+            <textarea name="notes" placeholder="Informations complémentaires">${escapeHtml(editing?.notes||'')}</textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">${editing ? "Enregistrer les modifications" : "Ajouter le document"}</button>
+          ${editing ? `<button type="button" class="btn btn-ghost" id="cancel-edit-doc">Annuler</button>` : ''}
+          ${state.docFormMsg ? `<span class="form-msg">${state.docFormMsg}</span>` : ''}
+        </div>
+      </form>
+    </div>
+  `;
+}
+
+function renderChauffeurs(){
+  const editing = state.chauffeurs.find(c => c.id === state.editingChauffeurId);
+  return `
+    <div class="page-head">
+      <div>
+        <h1>Chauffeurs</h1>
+        <p>Gérez la liste des chauffeurs et leur affectation aux véhicules.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>${editing ? "Modifier le chauffeur" : "Ajouter un chauffeur"}</h2></div>
+      ${!canEdit() ? `<p class="no-docs">Votre compte est en consultation seule.</p>` : `
+      <form id="chauffeur-form">
+        <div class="form-grid">
+          <div class="field">
+            <label>Nom *</label>
+            <input name="name" required value="${escapeAttr(editing?.name||'')}" placeholder="Ex : Paul Ndongo">
+          </div>
+          <div class="field">
+            <label>Téléphone</label>
+            <input name="telephone" value="${escapeAttr(editing?.telephone||'')}" placeholder="Ex : 6XX XXX XXX">
+          </div>
+          <div class="field">
+            <label>Numéro de permis</label>
+            <input name="permis" value="${escapeAttr(editing?.permis||'')}" placeholder="Ex : CM-2020-XXXXX">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">${editing ? "Enregistrer les modifications" : "Ajouter le chauffeur"}</button>
+          ${editing ? `<button type="button" class="btn btn-ghost" id="cancel-edit-chauffeur">Annuler</button>` : ''}
+          ${state.chauffeurFormMsg ? `<span class="form-msg">${escapeHtml(state.chauffeurFormMsg)}</span>` : ''}
+        </div>
+      </form>
+      `}
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>${state.chauffeurs.length} chauffeur${state.chauffeurs.length!==1?'s':''}</h2></div>
+      ${state.chauffeurs.length === 0 ? `<p class="no-docs">Aucun chauffeur enregistré.</p>` :
+      `<div class="vehicle-docs">
+        ${state.chauffeurs.map(c => {
+          const vehicule = state.vehicles.find(v => v.chauffeurId === c.id);
+          return `
+          <div class="doc-line">
+            <div class="doc-line-left">
+              <span class="doc-type">${escapeHtml(c.name)}</span>
+              ${c.telephone ? `<span class="doc-date">${escapeHtml(c.telephone)}</span>` : ''}
+              <span class="doc-date">${vehicule ? 'Affecté à ' + escapeHtml(vehicule.plaque) : 'Non affecté'}</span>
+            </div>
+            <div class="row-actions">
+              ${canEdit() ? `<button class="icon-btn" data-edit-chauffeur="${c.id}">Modifier</button>
+              <button class="icon-btn danger" data-delete-chauffeur="${c.id}">Supprimer</button>` : ''}
+            </div>
+          </div>
+        `}).join('')}
+      </div>`}
+    </div>
+  `;
+}
+
+function renderMajGroupee(){
+  let list = state.vehicles;
+  if(state.bulkSearch.trim()){
+    const q = state.bulkSearch.trim().toLowerCase();
+    list = list.filter(v => v.plaque.toLowerCase().includes(q) || (v.proprietaire||'').toLowerCase().includes(q));
+  }
+  const selectedCount = state.bulkSelectedIds.length;
+  const showAssureur = state.bulkDocType === 'Assurance';
+
+  return `
+    <div class="page-head">
+      <div>
+        <h1>Mise à jour groupée</h1>
+        <p>Mettez à jour ou créez un même document pour plusieurs véhicules à la fois, sélectionnés par propriétaire ou par plaque.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <h2>1. Sélectionner les véhicules</h2>
+        <input class="search" id="bulk-search-input" placeholder="Rechercher par plaque ou propriétaire…" value="${escapeAttr(state.bulkSearch)}">
+      </div>
+      <div class="form-actions" style="margin-top:0; margin-bottom:14px;">
+        <button type="button" class="btn btn-ghost" id="bulk-select-all">Sélectionner les ${list.length} affichés</button>
+        <button type="button" class="btn btn-ghost" id="bulk-select-none">Tout désélectionner</button>
+        <span class="form-msg">${selectedCount} véhicule${selectedCount!==1?'s':''} sélectionné${selectedCount!==1?'s':''}</span>
+      </div>
+      <div class="vehicle-docs">
+        ${list.length === 0 ? `<p class="no-docs">Aucun véhicule ne correspond à cette recherche.</p>` :
+        list.map(v => `
+          <label class="doc-line" style="cursor:pointer;">
+            <div class="doc-line-left">
+              <input type="checkbox" class="bulk-vehicle-checkbox" data-vehicle-id="${v.id}" ${state.bulkSelectedIds.includes(v.id)?'checked':''}>
+              <span class="plate">${escapeHtml(v.plaque)}</span>
+              <span class="doc-type">${escapeHtml(v.marque)} ${escapeHtml(v.modele||'')}</span>
+              <span class="doc-date">${escapeHtml(v.proprietaire||'Propriétaire non renseigné')}</span>
+            </div>
+          </label>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>2. Document à mettre à jour</h2></div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Type de document *</label>
+          <select id="bulk-doctype-select">
+            ${state.docTypes.map(t => `<option value="${escapeAttr(t)}" ${state.bulkDocType===t?'selected':''}>${escapeHtml(t)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field" id="bulk-assureur-field" style="${showAssureur?'':'display:none;'}">
+          <label>Nom de l'assureur</label>
+          <input id="bulk-assureur-input" value="${escapeAttr(state.bulkAssureur)}" placeholder="Ex : Chanas Assurances">
+        </div>
+        <div class="field">
+          <label>Nouvelle date de péremption *</label>
+          <input type="date" id="bulk-date-expiration-input" value="${state.bulkDateExpiration}">
+        </div>
+        <div class="field">
+          <label>Nouvelle date d'émission</label>
+          <input type="date" id="bulk-date-emission-input" value="${state.bulkDateEmission}">
+        </div>
+        <div class="field span-2">
+          <label>Référence / numéro</label>
+          <input id="bulk-reference-input" value="${escapeAttr(state.bulkReference)}" placeholder="Optionnel — appliqué à tous les documents mis à jour">
+        </div>
+      </div>
+      <p class="hint" style="margin-top:14px;">Si le véhicule possède déjà un document de ce type, ses dates sont mises à jour. Sinon, un nouveau document est créé. Les documents protégés par mot de passe sont ignorés et listés à part.</p>
+      <div class="form-actions">
+        <button class="btn btn-primary" id="bulk-apply-btn">Appliquer à ${selectedCount} véhicule${selectedCount!==1?'s':''}</button>
+        ${state.bulkMsg ? `<span class="form-msg">${escapeHtml(state.bulkMsg)}</span>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function renderSinistres(){
+  let list = allSinistresWithDetails();
+  if(state.sinistreFilterVehicle) list = list.filter(s => s.vehicleId === state.sinistreFilterVehicle);
+  if(state.sinistreFilterChauffeur) list = list.filter(s => s.chauffeurId === state.sinistreFilterChauffeur);
+  if(state.sinistreFilterStatut) list = list.filter(s => s.statut === state.sinistreFilterStatut);
+  list = list.slice().sort((a,b) => (b.date||'').localeCompare(a.date||''));
+
+  return `
+    <div class="page-head">
+      <div>
+        <h1>Sinistres</h1>
+        <p>Liste des sinistres déclarés, filtrable par véhicule, chauffeur ou statut.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <h2>${list.length} sinistre${list.length!==1?'s':''}</h2>
+        <div class="filters-row">
+          <select class="search" id="sinistre-filter-vehicle">
+            <option value="">Tous les véhicules</option>
+            ${state.vehicles.map(v => `<option value="${v.id}" ${state.sinistreFilterVehicle===v.id?'selected':''}>${escapeHtml(v.plaque)}</option>`).join('')}
+          </select>
+          <select class="search" id="sinistre-filter-chauffeur">
+            <option value="">Tous les chauffeurs</option>
+            ${state.chauffeurs.map(c => `<option value="${c.id}" ${state.sinistreFilterChauffeur===c.id?'selected':''}>${escapeHtml(c.name)}</option>`).join('')}
+          </select>
+          <select class="search" id="sinistre-filter-statut">
+            <option value="">Tous les statuts</option>
+            ${SINISTRE_STATUTS.map(s => `<option value="${s}" ${state.sinistreFilterStatut===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div class="xl-wrap">
+        <table class="xl-table">
+          <thead>
+            <tr>
+              <th>Plaque</th>
+              <th>Véhicule</th>
+              <th>Chauffeur</th>
+              <th>Type</th>
+              <th>Date</th>
+              <th>Montant</th>
+              <th>Statut</th>
+              <th>Référence</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${list.length === 0 ? `<tr class="empty-row"><td colspan="9">${state.sinistres.length===0 ? "Aucun sinistre enregistré pour l'instant." : "Aucun sinistre ne correspond à ce filtre."}</td></tr>` :
+            list.map(s => `
+              <tr class="xl-${sinistreStatutClass(s.statut)}">
+                <td>${s.vehicle ? `<span class="plate">${escapeHtml(s.vehicle.plaque)}</span>` : '—'}</td>
+                <td>${s.vehicle ? escapeHtml(s.vehicle.marque) + ' ' + escapeHtml(s.vehicle.modele||'') : 'Véhicule supprimé'}</td>
+                <td>${s.chauffeur ? escapeHtml(s.chauffeur.name) : '—'}</td>
+                <td>${escapeHtml(s.type)}</td>
+                <td>${s.date ? fmtDate(s.date) : '—'}</td>
+                <td>${fmtMontant(s.montant)}</td>
+                <td class="xl-status">${escapeHtml(s.statut)}</td>
+                <td>${escapeHtml(s.reference||'—')}</td>
+                <td><div class="row-actions">${canEdit() ? `<button class="icon-btn" data-edit-sinistre="${s.id}">Modifier</button><button class="icon-btn danger" data-delete-sinistre="${s.id}">Supprimer</button>` : ''}</div></td>
+              </tr>
+              ${s.description ? `<tr class="xl-${sinistreStatutClass(s.statut)}"><td></td><td colspan="8" style="color:var(--ink-soft); font-style:italic;">${escapeHtml(s.description)}</td></tr>` : ''}
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function renderSinistreForm(){
+  const editing = state.sinistres.find(s => s.id === state.editingSinistreId);
+  if(state.vehicles.length === 0){
+    return `
+      <div class="page-head"><div><h1>Ajouter un sinistre</h1><p>Aucun véhicule enregistré pour l'instant.</p></div></div>
+      <div class="section"><p class="no-docs">Ajoutez d'abord un véhicule avant d'enregistrer un sinistre.</p></div>
+    `;
+  }
+  return `
+    <div class="page-head">
+      <div>
+        <h1>${editing ? "Modifier le sinistre" : "Ajouter un sinistre"}</h1>
+        <p>Enregistrez un accident, vol, incendie ou autre sinistre pour un véhicule.</p>
+      </div>
+    </div>
+    <div class="section">
+      <form id="sinistre-form">
+        <div class="form-grid">
+          <div class="field">
+            <label>Véhicule *</label>
+            <select name="vehicleId" required>
+              ${state.vehicles.map(v => `<option value="${v.id}" ${editing?.vehicleId===v.id?'selected':''}>${escapeHtml(v.plaque)} — ${escapeHtml(v.marque)} ${escapeHtml(v.modele||'')}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field">
+            <label>Chauffeur au moment du sinistre</label>
+            <select name="chauffeurId">
+              <option value="">Non renseigné</option>
+              ${state.chauffeurs.map(c => `<option value="${c.id}" ${editing?.chauffeurId===c.id?'selected':''}>${escapeHtml(c.name)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field">
+            <label>Type de sinistre *</label>
+            <select name="type" required>
+              ${SINISTRE_TYPES.map(t => `<option value="${t}" ${editing?.type===t?'selected':''}>${t}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field">
+            <label>Date du sinistre *</label>
+            <input type="date" name="date" required value="${editing?.date||''}">
+          </div>
+          <div class="field">
+            <label>Lieu</label>
+            <input name="lieu" value="${escapeAttr(editing?.lieu||'')}" placeholder="Ex : Carrefour Warda, Yaoundé">
+          </div>
+          <div class="field">
+            <label>Montant des dégâts estimé (FCFA)</label>
+            <input type="number" min="0" step="1" name="montant" value="${editing?.montant ?? ''}" placeholder="Ex : 250000">
+          </div>
+          <div class="field">
+            <label>Statut *</label>
+            <select name="statut" required>
+              ${SINISTRE_STATUTS.map(s => `<option value="${s}" ${(editing?.statut||'Déclaré')===s?'selected':''}>${s}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field">
+            <label>Référence dossier assurance</label>
+            <input name="reference" value="${escapeAttr(editing?.reference||'')}" placeholder="Ex : SIN-2026-0042">
+          </div>
+          <div class="field span-2">
+            <label>Description</label>
+            <textarea name="description" placeholder="Circonstances, dégâts constatés…">${escapeHtml(editing?.description||'')}</textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">${editing ? "Enregistrer les modifications" : "Ajouter le sinistre"}</button>
+          ${editing ? `<button type="button" class="btn btn-ghost" id="cancel-edit-sinistre">Annuler</button>` : ''}
+          ${state.sinistreFormMsg ? `<span class="form-msg">${escapeHtml(state.sinistreFormMsg)}</span>` : ''}
+        </div>
+      </form>
+    </div>
+  `;
+}
+
+function renderStatsTable(rows, title){
+  const max = Math.max(1, ...rows.map(r => r.count));
+  return `
+    <div class="section">
+      <div class="section-head"><h2>${title}</h2></div>
+      ${rows.length === 0 ? `<p class="no-docs">Aucun sinistre enregistré pour l'instant.</p>` :
+      `<table>
+        <thead><tr><th>Nom</th><th>Sinistres</th><th>Montant total</th><th></th></tr></thead>
+        <tbody>
+          ${rows.map(r => `
+            <tr>
+              <td>${escapeHtml(r.label)}</td>
+              <td>${r.count}</td>
+              <td>${fmtMontant(r.total)}</td>
+              <td style="width:140px;"><div style="background:var(--paper-2); border-radius:4px; overflow:hidden; height:8px;"><div style="background:var(--teal); height:100%; width:${Math.round((r.count/max)*100)}%;"></div></div></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>`}
+    </div>
+  `;
+}
+
+function renderStatistiquesSinistres(){
+  return `
+    <div class="page-head">
+      <div>
+        <h1>Statistiques sinistres</h1>
+        <p>Nombre de sinistres et montant total des dégâts, par véhicule et par chauffeur.</p>
+      </div>
+    </div>
+    ${renderStatsTable(statsByVehicle(), "Par véhicule")}
+    ${renderStatsTable(statsByChauffeur(), "Par chauffeur")}
+  `;
+}
+
+function renderTypesDocuments(){
+  return `
+    <div class="page-head">
+      <div>
+        <h1>Types de documents</h1>
+        <p>Ajoutez ou supprimez les types de documents suivis pour la flotte.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <h2>Ajouter un type</h2>
+      </div>
+      <form id="type-form" class="form-grid full">
+        <div class="field">
+          <label>Nom du type de document *</label>
+          <input name="typeName" required placeholder="Ex : Contrôle antipollution">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Ajouter le type</button>
+          ${state.typeFormMsg ? `<span class="form-msg">${state.typeFormMsg}</span>` : ''}
+        </div>
+      </form>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <h2>${state.docTypes.length} type${state.docTypes.length!==1?'s':''} enregistré${state.docTypes.length!==1?'s':''}</h2>
+      </div>
+      ${state.docTypes.length === 0 ? `<p class="no-docs">Aucun type de document. Ajoutez-en un ci-dessus.</p>` :
+      `<div class="vehicle-docs">
+        ${state.docTypes.map(t => {
+          const usage = state.documents.filter(d => d.type === t).length;
+          return `
+          <div class="doc-line">
+            <div class="doc-line-left">
+              <span class="doc-type">${escapeHtml(t)}</span>
+              <span class="doc-date">${usage} document${usage!==1?'s':''} lié${usage!==1?'s':''}</span>
+            </div>
+            <div class="row-actions">
+              <button class="icon-btn danger" data-delete-type="${escapeAttr(t)}">Supprimer</button>
+            </div>
+          </div>
+        `}).join('')}
+      </div>`}
+    </div>
+  `;
+}
+
+function fmtDateTime(iso){
+  if(!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleString('fr-FR', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+function renderUtilisateurs(){
+  return `
+    <div class="page-head">
+      <div>
+        <h1>Utilisateurs</h1>
+        <p>Chaque personne se connecte avec son propre identifiant, pour que ses actions soient attribuées à son nom.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>Ajouter un utilisateur</h2></div>
+      <form id="user-form">
+        <div class="form-grid">
+          <div class="field">
+            <label>Nom affiché *</label>
+            <input name="name" required placeholder="Ex : Marie Ateba">
+          </div>
+          <div class="field">
+            <label>Identifiant de connexion *</label>
+            <input name="username" required placeholder="Ex : marie">
+          </div>
+          <div class="field">
+            <label>Mot de passe *</label>
+            <input type="password" name="password" required>
+          </div>
+          <div class="field">
+            <label>Rôle</label>
+            <select name="role" id="user-role-select">
+              <option value="viewer">Consultation seule</option>
+              <option value="editor" selected>Consultation et modification</option>
+              <option value="admin">Administrateur (accès complet + suivi)</option>
+            </select>
+          </div>
+          <div class="field span-2" id="user-pages-field">
+            <label>Pages accessibles (pour un compte non-administrateur)</label>
+            <div class="radio-row">
+              ${ALL_PAGE_KEYS.map(([key,label]) => `<label><input type="checkbox" name="allowedPages" value="${key}" checked> ${label}</label>`).join('')}
+            </div>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Ajouter l'utilisateur</button>
+          ${state.userFormMsg ? `<span class="form-msg">${escapeHtml(state.userFormMsg)}</span>` : ''}
+        </div>
+      </form>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>${state.usersList.length} compte${state.usersList.length!==1?'s':''}</h2></div>
+      ${state.usersList.length === 0 ? `<p class="no-docs">Chargement…</p>` :
+      `<div class="vehicle-docs">
+        ${state.usersList.map(u => `
+          <div class="doc-line">
+            <div class="doc-line-left">
+              <span class="doc-type">${escapeHtml(u.name)}</span>
+              <span class="doc-date">@${escapeHtml(u.username)}${u.isAdmin ? ' · Administrateur' : (u.canEdit === false ? ' · Consultation seule' : ' · Consultation et modification')}</span>
+              ${!u.isAdmin ? `<span class="doc-date">Pages : ${(u.allowedPages||[]).length === ALL_PAGE_KEYS.length ? 'Toutes' : (u.allowedPages||[]).map(k => (ALL_PAGE_KEYS.find(p=>p[0]===k)||[k,k])[1]).join(', ') || 'Aucune'}</span>` : ''}
+            </div>
+            <div class="row-actions">
+              ${state.currentUser && state.currentUser.username !== u.username ? `<button class="icon-btn danger" data-delete-user="${escapeAttr(u.username)}">Supprimer</button>` : `<span class="doc-date">Vous</span>`}
+            </div>
+          </div>
+        `).join('')}
+      </div>`}
+    </div>
+  `;
+}
+
+function renderPresence(){
+  return `
+    <div class="page-head">
+      <div>
+        <h1>Qui est en ligne</h1>
+        <p>Statut de connexion de chaque utilisateur, mis à jour automatiquement.</p>
+      </div>
+    </div>
+    <div class="section">
+      ${state.presenceList.length === 0 ? `<p class="no-docs">Chargement…</p>` :
+      `<table>
+        <thead><tr><th>Utilisateur</th><th>Statut</th><th>Dernière activité</th></tr></thead>
+        <tbody>
+          ${state.presenceList.map(u => `
+            <tr>
+              <td>${escapeHtml(u.name)} <span style="color:var(--ink-soft);">@${escapeHtml(u.username)}</span></td>
+              <td><span class="badge ${u.online ? 'valide' : 'expire'}"><span class="badge-dot"></span>${u.online ? 'En ligne' : 'Hors ligne'}</span></td>
+              <td>${fmtDateTime(u.lastSeen)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>`}
+    </div>
+  `;
+}
+
+function renderHistorique(){
+  return `
+    <div class="page-head">
+      <div>
+        <h1>Historique</h1>
+        <p>Journal des ajouts, modifications et suppressions, avec l'auteur et l'horodatage.</p>
+      </div>
+    </div>
+    <div class="section">
+      ${state.historyList.length === 0 ? `<p class="no-docs">Aucune modification enregistrée pour l'instant.</p>` :
+      `<table>
+        <thead><tr><th>Date</th><th>Utilisateur</th><th>Action</th></tr></thead>
+        <tbody>
+          ${state.historyList.map(h => `
+            <tr>
+              <td>${fmtDateTime(h.at)}</td>
+              <td>${escapeHtml(h.username || '—')}</td>
+              <td>${escapeHtml(h.summary || h.action)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>`}
+    </div>
+  `;
+}
+
+
+function renderSauvegarde(){
+  const od = state.onedrive || {};
+  return `
+    <div class="page-head">
+      <div>
+        <h1>Sauvegarde OneDrive</h1>
+        <p>Une copie des données est envoyée dans votre OneDrive à chaque modification.</p>
+      </div>
+    </div>
+    <div class="section">
+      ${!od.configured ? `
+        <p class="no-docs">OneDrive n'est pas encore configuré sur ce serveur. Un administrateur doit renseigner les identifiants Microsoft (voir la section OneDrive du README du projet), puis redéployer le serveur.</p>
+      ` : od.connected ? `
+        <p style="margin-bottom:16px;"><span class="badge valide"><span class="badge-dot"></span>Connecté à OneDrive</span></p>
+        <p class="no-docs" style="margin-bottom:16px;">Les sauvegardes sont déposées dans le dossier de l'application sur votre OneDrive (Apps → nom de l'application), sous le nom <strong>flotte-backup.json</strong>.</p>
+        <div class="form-actions" style="margin-top:0;">
+          <button class="btn btn-primary" id="backup-now-btn">Sauvegarder maintenant</button>
+          <button class="btn btn-ghost" id="onedrive-disconnect-btn">Déconnecter</button>
+          ${state.onedriveMsg ? `<span class="form-msg">${escapeHtml(state.onedriveMsg)}</span>` : ''}
+        </div>
+      ` : `
+        <p style="margin-bottom:16px;"><span class="badge attention"><span class="badge-dot"></span>Non connecté</span></p>
+        <a class="btn btn-primary" href="/auth/onedrive/login" target="_blank" rel="noopener" style="display:inline-block; text-decoration:none;">Connecter OneDrive</a>
+        <p class="no-docs" style="margin-top:14px;">Une fenêtre Microsoft s'ouvre pour vous connecter et autoriser l'accès. Une fois terminé, revenez ici et rouvrez cet onglet pour voir le statut mis à jour.</p>
+      `}
+    </div>
+  `;
+}
+
+/* ---------- HELPERS ---------- */
+
+function escapeHtml(str){
+  return String(str||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escapeAttr(str){ return escapeHtml(str); }
+
+/* ---------- EVENTS ---------- */
+
+function attachHandlers(){
+  const sidebarToggle = document.getElementById('sidebar-toggle');
+  if(sidebarToggle){
+    sidebarToggle.addEventListener('click', () => {
+      state.sidebarOpen = !state.sidebarOpen;
+      render();
+    });
+  }
+
+  const logoutBtn = document.getElementById('logout-btn');
+  if(logoutBtn){
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('flotte-creds');
+      state.authed = false;
+      state.currentUser = null;
+      stopHeartbeat();
+      render();
+    });
+  }
+
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => setTab(btn.dataset.tab));
+  });
+
+  const searchInput = document.getElementById('search-input');
+  if(searchInput){
+    searchInput.addEventListener('input', (e) => {
+      state.search = e.target.value;
+      const pos = e.target.selectionStart;
+      render();
+      const again = document.getElementById('search-input');
+      if(again){ again.focus(); again.setSelectionRange(pos,pos); }
+    });
+  }
+
+  const typeFilterSelect = document.getElementById('type-filter-select');
+  if(typeFilterSelect){
+    typeFilterSelect.addEventListener('change', (e) => {
+      state.docTypeFilter = e.target.value;
+      render();
+    });
+  }
+
+  const vehicleForm = document.getElementById('vehicle-form');
+  if(vehicleForm){
+    vehicleForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(vehicleForm);
+      const data = {
+        plaque: fd.get('plaque').trim(),
+        proprietaire: fd.get('proprietaire').trim(),
+        categorie: fd.get('categorie').trim(),
+        marque: fd.get('marque').trim(),
+        modele: fd.get('modele').trim(),
+        chauffeurId: fd.get('chauffeurId') || null,
+      };
+      if(state.editingVehicleId){
+        const v = state.vehicles.find(v => v.id === state.editingVehicleId);
+        Object.assign(v, data);
+        state.vehicleFormMsg = "Véhicule mis à jour.";
+      }else{
+        state.vehicles.push({ id: uid(), ...data });
+        state.vehicleFormMsg = "Véhicule ajouté.";
+      }
+      state.editingVehicleId = null;
+      await saveData();
+      setTab("vehicules");
+    });
+  }
+
+  const cancelVehicle = document.getElementById('cancel-edit-vehicle');
+  if(cancelVehicle){
+    cancelVehicle.addEventListener('click', () => { state.editingVehicleId = null; setTab('vehicules'); });
+  }
+
+  const docForm = document.getElementById('doc-form');
+  if(docForm){
+    const typeSelect = document.getElementById('doc-type-select');
+    const assureurField = document.getElementById('assureur-field');
+    if(typeSelect && assureurField){
+      typeSelect.addEventListener('change', () => {
+        assureurField.style.display = typeSelect.value === 'Assurance' ? 'flex' : 'none';
+      });
+    }
+    docForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(docForm);
+      const data = {
+        vehicleId: fd.get('vehicleId'),
+        type: fd.get('type'),
+        reference: fd.get('reference').trim(),
+        dateEmission: fd.get('dateEmission'),
+        dateExpiration: fd.get('dateExpiration'),
+        notes: fd.get('notes').trim(),
+        assureur: fd.get('assureur') ? fd.get('assureur').trim() : '',
+      };
+      if(state.editingDocumentId){
+        const d = state.documents.find(d => d.id === state.editingDocumentId);
+        Object.assign(d, data);
+        state.docFormMsg = "Document mis à jour.";
+      }else{
+        state.documents.push({ id: uid(), ...data });
+        state.docFormMsg = "Document ajouté.";
+      }
+      state.editingDocumentId = null;
+      await saveData();
+      setTab("vehicules");
+    });
+  }
+
+  const cancelDoc = document.getElementById('cancel-edit-doc');
+  if(cancelDoc){
+    cancelDoc.addEventListener('click', () => { state.editingDocumentId = null; setTab('vehicules'); });
+  }
+
+  document.querySelectorAll('[data-edit-vehicle]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.editVehicle;
+      const vehicle = state.vehicles.find(v => v.id === id);
+      if(vehicle && vehicle.verrou && vehicle.verrou.locked){
+        const ok = await requestUnlock('vehicle', id, vehicleLabel(vehicle));
+        if(!ok) return;
+      }
+      state.editingVehicleId = id;
+      state.tab='ajouter-vehicule';
+      render();
+    });
+  });
+  document.querySelectorAll('[data-delete-vehicle]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.deleteVehicle;
+      const vehicle = state.vehicles.find(v => v.id === id);
+      if(vehicle && vehicle.verrou && vehicle.verrou.locked){
+        const ok = await requestUnlock('vehicle', id, vehicleLabel(vehicle));
+        if(!ok) return;
+      }
+      if(!confirm("Supprimer ce véhicule et tous ses documents associés ?")) return;
+      state.vehicles = state.vehicles.filter(v => v.id !== id);
+      state.documents = state.documents.filter(d => d.vehicleId !== id);
+      await saveData();
+    });
+  });
+
+  document.querySelectorAll('[data-lock-vehicle]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.lockVehicle;
+      const pw = window.prompt("Définissez le mot de passe de protection pour cette fiche :");
+      if(!pw) return;
+      const confirmPw = window.prompt("Confirmez le mot de passe :");
+      if(pw !== confirmPw){ alert("Les mots de passe ne correspondent pas."); return; }
+      const res = await fetch('/api/lock', { method:'POST', headers:{ 'Content-Type':'application/json', ...authHeaders() }, body: JSON.stringify({ kind:'vehicle', id, password: pw }) });
+      const data = await res.json();
+      if(data.ok){ await loadData(); }else{ alert(data.error || "Erreur."); }
+    });
+  });
+  document.querySelectorAll('[data-unlock-vehicle]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.unlockVehicle;
+      const pw = window.prompt("Entrez le mot de passe actuel de protection pour le retirer :");
+      if(pw === null) return;
+      const res = await fetch('/api/unlock-remove', { method:'POST', headers:{ 'Content-Type':'application/json', ...authHeaders() }, body: JSON.stringify({ kind:'vehicle', id, password: pw }) });
+      const data = await res.json();
+      if(data.ok){ await loadData(); }else{ alert(data.error || "Mot de passe incorrect."); }
+    });
+  });
+  document.querySelectorAll('[data-edit-doc]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.editDoc;
+      const doc = state.documents.find(d => d.id === id);
+      if(doc && doc.verrou && doc.verrou.locked){
+        const ok = await requestUnlock('document', id, `Document ${doc.type}`);
+        if(!ok) return;
+      }
+      state.editingDocumentId = id;
+      state.tab='ajouter-document';
+      render();
+    });
+  });
+  document.querySelectorAll('[data-delete-doc]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.deleteDoc;
+      const doc = state.documents.find(d => d.id === id);
+      if(doc && doc.verrou && doc.verrou.locked){
+        const ok = await requestUnlock('document', id, `Document ${doc.type}`);
+        if(!ok) return;
+      }
+      if(!confirm("Supprimer ce document ?")) return;
+      state.documents = state.documents.filter(d => d.id !== id);
+      await saveData();
+    });
+  });
+
+  document.querySelectorAll('[data-lock-doc]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.lockDoc;
+      const pw = window.prompt("Définissez le mot de passe de protection pour ce document :");
+      if(!pw) return;
+      const confirmPw = window.prompt("Confirmez le mot de passe :");
+      if(pw !== confirmPw){ alert("Les mots de passe ne correspondent pas."); return; }
+      const res = await fetch('/api/lock', { method:'POST', headers:{ 'Content-Type':'application/json', ...authHeaders() }, body: JSON.stringify({ kind:'document', id, password: pw }) });
+      const data = await res.json();
+      if(data.ok){ await loadData(); }else{ alert(data.error || "Erreur."); }
+    });
+  });
+  document.querySelectorAll('[data-unlock-doc]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.unlockDoc;
+      const pw = window.prompt("Entrez le mot de passe actuel de protection pour le retirer :");
+      if(pw === null) return;
+      const res = await fetch('/api/unlock-remove', { method:'POST', headers:{ 'Content-Type':'application/json', ...authHeaders() }, body: JSON.stringify({ kind:'document', id, password: pw }) });
+      const data = await res.json();
+      if(data.ok){ await loadData(); }else{ alert(data.error || "Mot de passe incorrect."); }
+    });
+  });
+
+  const typeForm = document.getElementById('type-form');
+  if(typeForm){
+    typeForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(typeForm);
+      const name = fd.get('typeName').trim();
+      if(!name) return;
+      if(state.docTypes.some(t => t.toLowerCase() === name.toLowerCase())){
+        state.typeFormMsg = "Ce type existe déjà.";
+        render();
+        return;
+      }
+      state.docTypes.push(name);
+      state.typeFormMsg = "Type ajouté.";
+      await saveData();
+      setTab("types-documents");
+    });
+  }
+
+  document.querySelectorAll('[data-delete-type]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const type = btn.dataset.deleteType;
+      const usage = state.documents.filter(d => d.type === type).length;
+      const msg = usage > 0
+        ? `${usage} document(s) utilisent ce type. Le supprimer de la liste n'affectera pas les documents déjà enregistrés. Continuer ?`
+        : "Supprimer ce type de document ?";
+      if(!confirm(msg)) return;
+      state.docTypes = state.docTypes.filter(t => t !== type);
+      await saveData();
+    });
+  });
+
+  const backupNowBtn = document.getElementById('backup-now-btn');
+  if(backupNowBtn){
+    backupNowBtn.addEventListener('click', async () => {
+      state.onedriveMsg = "Sauvegarde en cours…";
+      render();
+      try{
+        const res = await fetch('/api/onedrive/backup-now', { method:'POST', headers: authHeaders() });
+        const data = await res.json();
+        state.onedriveMsg = data.ok ? "Sauvegarde effectuée." : "Échec : " + (data.error || '');
+      }catch(e){
+        state.onedriveMsg = "Échec de la sauvegarde.";
+      }
+      render();
+    });
+  }
+
+  const onedriveDisconnectBtn = document.getElementById('onedrive-disconnect-btn');
+  if(onedriveDisconnectBtn){
+    onedriveDisconnectBtn.addEventListener('click', async () => {
+      await fetch('/api/onedrive/disconnect', { method:'POST', headers: authHeaders() });
+      state.onedriveMsg = "";
+      await loadOnedriveStatus();
+    });
+  }
+
+  const chauffeurForm = document.getElementById('chauffeur-form');
+  if(chauffeurForm){
+    chauffeurForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(chauffeurForm);
+      const data = {
+        name: fd.get('name').trim(),
+        telephone: fd.get('telephone').trim(),
+        permis: fd.get('permis').trim(),
+      };
+      if(state.editingChauffeurId){
+        const c = state.chauffeurs.find(c => c.id === state.editingChauffeurId);
+        Object.assign(c, data);
+        state.chauffeurFormMsg = "Chauffeur mis à jour.";
+      }else{
+        state.chauffeurs.push({ id: uid(), ...data });
+        state.chauffeurFormMsg = "Chauffeur ajouté.";
+      }
+      state.editingChauffeurId = null;
+      await saveData();
+      setTab("chauffeurs");
+    });
+  }
+
+  const cancelChauffeur = document.getElementById('cancel-edit-chauffeur');
+  if(cancelChauffeur){
+    cancelChauffeur.addEventListener('click', () => { state.editingChauffeurId = null; setTab('chauffeurs'); });
+  }
+
+  document.querySelectorAll('[data-edit-chauffeur]').forEach(btn => {
+    btn.addEventListener('click', () => { state.editingChauffeurId = btn.dataset.editChauffeur; state.tab='chauffeurs'; render(); });
+  });
+  document.querySelectorAll('[data-delete-chauffeur]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.deleteChauffeur;
+      if(!confirm("Supprimer ce chauffeur ? Les véhicules qui lui sont affectés n'auront plus de chauffeur assigné.")) return;
+      state.chauffeurs = state.chauffeurs.filter(c => c.id !== id);
+      state.vehicles.forEach(v => { if(v.chauffeurId === id) v.chauffeurId = null; });
+      await saveData();
+    });
+  });
+
+  const sinistreForm = document.getElementById('sinistre-form');
+  if(sinistreForm){
+    sinistreForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(sinistreForm);
+      const data = {
+        vehicleId: fd.get('vehicleId'),
+        chauffeurId: fd.get('chauffeurId') || null,
+        type: fd.get('type'),
+        date: fd.get('date'),
+        lieu: fd.get('lieu').trim(),
+        montant: fd.get('montant') ? Number(fd.get('montant')) : null,
+        statut: fd.get('statut'),
+        reference: fd.get('reference').trim(),
+        description: fd.get('description').trim(),
+      };
+      if(state.editingSinistreId){
+        const s = state.sinistres.find(s => s.id === state.editingSinistreId);
+        Object.assign(s, data);
+        state.sinistreFormMsg = "Sinistre mis à jour.";
+      }else{
+        state.sinistres.push({ id: uid(), ...data });
+        state.sinistreFormMsg = "Sinistre ajouté.";
+      }
+      state.editingSinistreId = null;
+      await saveData();
+      setTab("sinistres");
+    });
+  }
+
+  const cancelSinistre = document.getElementById('cancel-edit-sinistre');
+  if(cancelSinistre){
+    cancelSinistre.addEventListener('click', () => { state.editingSinistreId = null; setTab('sinistres'); });
+  }
+
+  document.querySelectorAll('[data-edit-sinistre]').forEach(btn => {
+    btn.addEventListener('click', () => { state.editingSinistreId = btn.dataset.editSinistre; state.tab='ajouter-sinistre'; render(); });
+  });
+  document.querySelectorAll('[data-delete-sinistre]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.deleteSinistre;
+      if(!confirm("Supprimer ce sinistre ?")) return;
+      state.sinistres = state.sinistres.filter(s => s.id !== id);
+      await saveData();
+    });
+  });
+
+  const sfVehicle = document.getElementById('sinistre-filter-vehicle');
+  if(sfVehicle){ sfVehicle.addEventListener('change', (e) => { state.sinistreFilterVehicle = e.target.value; render(); }); }
+  const sfChauffeur = document.getElementById('sinistre-filter-chauffeur');
+  if(sfChauffeur){ sfChauffeur.addEventListener('change', (e) => { state.sinistreFilterChauffeur = e.target.value; render(); }); }
+  const sfStatut = document.getElementById('sinistre-filter-statut');
+  if(sfStatut){ sfStatut.addEventListener('change', (e) => { state.sinistreFilterStatut = e.target.value; render(); }); }
+
+  const rapportTypeSelect = document.getElementById('rapport-type-select');
+  if(rapportTypeSelect){ rapportTypeSelect.addEventListener('change', (e) => { state.rapportTypeFilter = e.target.value; render(); }); }
+
+  const rapportStatutSelect = document.getElementById('rapport-statut-select');
+  if(rapportStatutSelect){ rapportStatutSelect.addEventListener('change', (e) => { state.rapportStatutFilter = e.target.value; render(); }); }
+
+  const rapportProprietaireInput = document.getElementById('rapport-proprietaire-input');
+  if(rapportProprietaireInput){
+    rapportProprietaireInput.addEventListener('input', (e) => {
+      state.rapportProprietaire = e.target.value;
+      const pos = e.target.selectionStart;
+      render();
+      const again = document.getElementById('rapport-proprietaire-input');
+      if(again){ again.focus(); again.setSelectionRange(pos,pos); }
+    });
+  }
+
+  document.querySelectorAll('input[name="rapport-seuil"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      state.rapportSeuil = e.target.value;
+      render();
+    });
+  });
+
+  const rapportDateCustom = document.getElementById('rapport-date-custom');
+  if(rapportDateCustom){
+    rapportDateCustom.addEventListener('change', (e) => {
+      state.rapportDateCustom = e.target.value;
+      render();
+    });
+  }
+
+  const printRapportBtn = document.getElementById('print-rapport-btn');
+  if(printRapportBtn){
+    printRapportBtn.addEventListener('click', () => window.print());
+  }
+
+  const bulkSearchInput = document.getElementById('bulk-search-input');
+  if(bulkSearchInput){
+    bulkSearchInput.addEventListener('input', (e) => {
+      state.bulkSearch = e.target.value;
+      const pos = e.target.selectionStart;
+      render();
+      const again = document.getElementById('bulk-search-input');
+      if(again){ again.focus(); again.setSelectionRange(pos,pos); }
+    });
+  }
+
+  document.querySelectorAll('.bulk-vehicle-checkbox').forEach(cb => {
+    cb.addEventListener('change', (e) => {
+      const id = e.target.dataset.vehicleId;
+      if(e.target.checked){
+        if(!state.bulkSelectedIds.includes(id)) state.bulkSelectedIds.push(id);
+      }else{
+        state.bulkSelectedIds = state.bulkSelectedIds.filter(x => x !== id);
+      }
+      render();
+    });
+  });
+
+  const bulkSelectAll = document.getElementById('bulk-select-all');
+  if(bulkSelectAll){
+    bulkSelectAll.addEventListener('click', () => {
+      let visible = state.vehicles;
+      if(state.bulkSearch.trim()){
+        const q = state.bulkSearch.trim().toLowerCase();
+        visible = visible.filter(v => v.plaque.toLowerCase().includes(q) || (v.proprietaire||'').toLowerCase().includes(q));
+      }
+      visible.forEach(v => { if(!state.bulkSelectedIds.includes(v.id)) state.bulkSelectedIds.push(v.id); });
+      render();
+    });
+  }
+
+  const bulkSelectNone = document.getElementById('bulk-select-none');
+  if(bulkSelectNone){
+    bulkSelectNone.addEventListener('click', () => { state.bulkSelectedIds = []; render(); });
+  }
+
+  const bulkDoctypeSelect = document.getElementById('bulk-doctype-select');
+  if(bulkDoctypeSelect){
+    bulkDoctypeSelect.addEventListener('change', (e) => { state.bulkDocType = e.target.value; render(); });
+  }
+
+  const bulkAssureurInput = document.getElementById('bulk-assureur-input');
+  if(bulkAssureurInput){
+    bulkAssureurInput.addEventListener('input', (e) => {
+      state.bulkAssureur = e.target.value;
+      const pos = e.target.selectionStart;
+      render();
+      const again = document.getElementById('bulk-assureur-input');
+      if(again){ again.focus(); again.setSelectionRange(pos,pos); }
+    });
+  }
+
+  const bulkReferenceInput = document.getElementById('bulk-reference-input');
+  if(bulkReferenceInput){
+    bulkReferenceInput.addEventListener('input', (e) => {
+      state.bulkReference = e.target.value;
+      const pos = e.target.selectionStart;
+      render();
+      const again = document.getElementById('bulk-reference-input');
+      if(again){ again.focus(); again.setSelectionRange(pos,pos); }
+    });
+  }
+
+  const bulkDateExpirationInput = document.getElementById('bulk-date-expiration-input');
+  if(bulkDateExpirationInput){
+    bulkDateExpirationInput.addEventListener('change', (e) => { state.bulkDateExpiration = e.target.value; render(); });
+  }
+
+  const bulkDateEmissionInput = document.getElementById('bulk-date-emission-input');
+  if(bulkDateEmissionInput){
+    bulkDateEmissionInput.addEventListener('change', (e) => { state.bulkDateEmission = e.target.value; render(); });
+  }
+
+  const bulkApplyBtn = document.getElementById('bulk-apply-btn');
+  if(bulkApplyBtn){
+    bulkApplyBtn.addEventListener('click', async () => {
+      if(state.bulkSelectedIds.length === 0){ state.bulkMsg = "Sélectionnez au moins un véhicule."; render(); return; }
+      if(!state.bulkDocType){ state.bulkMsg = "Choisissez un type de document."; render(); return; }
+      if(!state.bulkDateExpiration){ state.bulkMsg = "Renseignez la nouvelle date de péremption."; render(); return; }
+
+      let updated = 0, created = 0;
+      const skipped = [];
+      state.bulkSelectedIds.forEach(vehicleId => {
+        const vehicle = state.vehicles.find(v => v.id === vehicleId);
+        if(!vehicle) return;
+        const existing = state.documents.find(d => d.vehicleId === vehicleId && d.type === state.bulkDocType);
+        if(existing){
+          if(existing.verrou && existing.verrou.locked){
+            skipped.push(vehicle.plaque);
+            return;
+          }
+          existing.dateExpiration = state.bulkDateExpiration;
+          if(state.bulkDateEmission) existing.dateEmission = state.bulkDateEmission;
+          if(state.bulkReference) existing.reference = state.bulkReference;
+          if(state.bulkDocType === 'Assurance' && state.bulkAssureur) existing.assureur = state.bulkAssureur;
+          updated++;
+        }else{
+          state.documents.push({
+            id: uid(),
+            vehicleId,
+            type: state.bulkDocType,
+            dateEmission: state.bulkDateEmission || '',
+            dateExpiration: state.bulkDateExpiration,
+            reference: state.bulkReference || '',
+            notes: '',
+            assureur: state.bulkDocType === 'Assurance' ? (state.bulkAssureur || '') : ''
+          });
+          created++;
+        }
+      });
+
+      await saveData();
+      state.bulkMsg = `${updated} document(s) mis à jour, ${created} créé(s)` + (skipped.length ? `, ${skipped.length} ignoré(s) car protégé(s) par mot de passe : ${skipped.join(', ')}` : '.');
+      render();
+    });
+  }
+
+  const userRoleSelect = document.getElementById('user-role-select');
+  const userPagesField = document.getElementById('user-pages-field');
+  if(userRoleSelect && userPagesField){
+    const syncPagesVisibility = () => {
+      userPagesField.style.display = userRoleSelect.value === 'admin' ? 'none' : 'flex';
+    };
+    syncPagesVisibility();
+    userRoleSelect.addEventListener('change', syncPagesVisibility);
+  }
+
+  const userForm = document.getElementById('user-form');
+  if(userForm){
+    userForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(userForm);
+      const role = fd.get('role');
+      const payload = {
+        name: fd.get('name').trim(),
+        username: fd.get('username').trim(),
+        password: fd.get('password'),
+        isAdmin: role === 'admin',
+        canEdit: role !== 'viewer',
+        allowedPages: fd.getAll('allowedPages'),
+      };
+      try{
+        const res = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        state.userFormMsg = data.ok ? "Utilisateur ajouté." : (data.error || "Erreur.");
+      }catch(e){
+        state.userFormMsg = "Erreur d'ajout.";
+      }
+      await loadUsers();
+    });
+  }
+
+  document.querySelectorAll('[data-delete-user]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const username = btn.dataset.deleteUser;
+      if(!confirm(`Supprimer l'accès de "${username}" ?`)) return;
+      const res = await fetch('/api/users/' + encodeURIComponent(username), { method: 'DELETE', headers: authHeaders() });
+      const data = await res.json();
+      if(!data.ok){ alert(data.error || "Erreur lors de la suppression."); }
+      await loadUsers();
+    });
+  });
+}
+
+/* ---------- INIT ---------- */
+render();
+if(getCreds().username){
+  loadData();
+}else{
+  state.authChecking = false;
+  render();
+}
+</script>
+</body>
+</html>
