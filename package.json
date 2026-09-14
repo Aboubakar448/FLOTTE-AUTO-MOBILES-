@@ -1,8 +1,8 @@
-{{
+{
   "name": "flotte-server",
   "version": "1.0.0",
   "private": true,
-  "description": "Serveur de gestion des dates de péremption des documents de véhicules, avec accès partagé multi-postes.",
+  "description": "Serveur de gestion des dates de peremption des documents de vehicules",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -13,4 +13,4 @@
   "dependencies": {
     "express": "^4.19.2"
   }
-}}
+}
