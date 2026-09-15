@@ -166,6 +166,99 @@
     white-space:nowrap;
   }
 
+  /* DASHBOARD HERO */
+  .dash-hero{
+    background:linear-gradient(135deg, var(--asphalt) 0%, #24304A 100%);
+    color:var(--white);
+    border-radius:var(--radius);
+    padding:28px 30px;
+    margin-bottom:22px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    flex-wrap:wrap;
+    gap:16px;
+  }
+  .dash-hero-eyebrow{
+    margin:0 0 6px;
+    font-size:13px;
+    color:#9AA3B2;
+    font-weight:600;
+    text-transform:capitalize;
+  }
+  .dash-hero h1{
+    margin:0 0 6px;
+    font-size:26px;
+    font-weight:800;
+    color:var(--white);
+  }
+  .dash-hero-sub{
+    margin:0;
+    font-size:14px;
+    color:#C7CCD6;
+  }
+  .dash-hero-actions{display:flex; gap:10px;}
+  .dash-hero-btn-ghost{
+    background:rgba(255,255,255,0.08);
+    color:var(--white);
+    border:1px solid rgba(255,255,255,0.25);
+  }
+  .dash-hero-btn-ghost:hover{background:rgba(255,255,255,0.16);}
+
+  .dash-grid{
+    display:grid;
+    grid-template-columns:300px 1fr;
+    gap:16px;
+    margin-bottom:22px;
+    align-items:stretch;
+  }
+  .dash-donut-card{margin-bottom:0; display:flex; flex-direction:column;}
+  .dash-donut-wrap{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    flex-wrap:wrap;
+    justify-content:center;
+    flex:1;
+  }
+  .dash-legend{display:flex; flex-direction:column; gap:10px; font-size:13px; color:var(--ink);}
+  .dash-legend-row{display:flex; align-items:center; gap:8px; white-space:nowrap;}
+  .dash-legend-row strong{margin-left:auto; padding-left:16px; font-weight:800;}
+
+  .stats-mini{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:14px;
+  }
+  .stat-icon{
+    width:38px;
+    height:38px;
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:10px;
+    background:var(--paper-2);
+    color:var(--ink-soft);
+  }
+  .stat-icon svg{width:20px; height:20px;}
+  .stat-card.valide .stat-icon{background:var(--teal-light); color:#1E4F42;}
+  .stat-card.attention .stat-icon{background:var(--amber-light); color:#8A5D1B;}
+  .stat-card.expire .stat-icon{background:var(--red-light); color:#7C281E;}
+
+  .cat-bars{display:flex; flex-direction:column; gap:12px;}
+  .cat-bar-row{display:flex; align-items:center; gap:12px; font-size:13.5px;}
+  .cat-bar-label{width:140px; flex-shrink:0; font-weight:600; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .cat-bar-track{flex:1; background:var(--paper-2); border-radius:6px; height:10px; overflow:hidden;}
+  .cat-bar-fill{background:var(--teal); height:100%; border-radius:6px;}
+  .cat-bar-count{width:28px; text-align:right; color:var(--ink-soft); font-weight:700;}
+
+  @media (max-width: 860px){
+    .dash-grid{grid-template-columns:1fr;}
+    .dash-hero{padding:22px 20px;}
+    .dash-hero h1{font-size:22px;}
+  }
+
   /* STAT CARDS */
   .stats{
     display:grid;
@@ -445,6 +538,15 @@
     justify-content:center;
     background:var(--asphalt);
     padding:20px;
+    position:relative;
+    overflow:hidden;
+  }
+  .login-art{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    z-index:0;
   }
   .login-card{
     background:var(--white);
@@ -452,6 +554,9 @@
     padding:36px 32px;
     width:100%;
     max-width:360px;
+    position:relative;
+    z-index:1;
+    box-shadow:0 30px 70px rgba(0,0,0,0.45);
   }
   .login-card .brand{
     color:var(--ink);
@@ -514,6 +619,54 @@ const ALL_PAGE_KEYS = [
 ];
 const ALERT_WINDOW = 30; // jours
 
+const ICON_TRUCK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="7" width="13" height="9" rx="1"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="5.5" cy="18.5" r="1.6"/><circle cx="16.5" cy="18.5" r="1.6"/></svg>`;
+const ICON_CHECK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>`;
+const ICON_ALERT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2z"/><line x1="12" y1="9.5" x2="12" y2="14"/><circle cx="12" cy="17" r="0.6" fill="currentColor" stroke="none"/></svg>`;
+const ICON_X = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>`;
+
+function renderDonutChart(counts){
+  const total = counts.valide + counts.attention + counts.expire;
+  const r = 60;
+  const circumference = 2 * Math.PI * r;
+  if(total === 0){
+    return `<svg viewBox="0 0 160 160" width="150" height="150"><circle cx="80" cy="80" r="${r}" fill="none" stroke="var(--paper-2)" stroke-width="20"/><text x="80" y="86" text-anchor="middle" font-family="Public Sans, sans-serif" font-size="12" fill="var(--ink-soft)">Aucun document</text></svg>`;
+  }
+  const segments = [
+    { value: counts.valide, color: 'var(--teal)' },
+    { value: counts.attention, color: 'var(--amber)' },
+    { value: counts.expire, color: 'var(--red)' },
+  ];
+  let offset = 0;
+  const circles = segments.filter(s => s.value > 0).map(s => {
+    const frac = s.value / total;
+    const dash = frac * circumference;
+    const gap = circumference - dash;
+    const el = `<circle cx="80" cy="80" r="${r}" fill="none" stroke="${s.color}" stroke-width="20" stroke-dasharray="${dash} ${gap}" stroke-dashoffset="${-offset}" transform="rotate(-90 80 80)"/>`;
+    offset += dash;
+    return el;
+  }).join('');
+  return `
+    <svg viewBox="0 0 160 160" width="150" height="150">
+      <circle cx="80" cy="80" r="${r}" fill="none" stroke="var(--paper-2)" stroke-width="20"/>
+      ${circles}
+      <text x="80" y="77" text-anchor="middle" font-family="Archivo, sans-serif" font-size="30" font-weight="800" fill="var(--ink)">${total}</text>
+      <text x="80" y="97" text-anchor="middle" font-family="Public Sans, sans-serif" font-size="11" fill="var(--ink-soft)">document${total!==1?'s':''}</text>
+    </svg>
+  `;
+}
+
+function statsByCategory(){
+  const map = new Map();
+  state.vehicles.forEach(v => {
+    const cat = (v.categorie || '').trim() || 'Non catégorisé';
+    map.set(cat, (map.get(cat) || 0) + 1);
+  });
+  return Array.from(map.entries()).map(([label, count]) => ({ label, count })).sort((a,b) => b.count - a.count);
+}
+
+const INVITE_MATCH = window.location.pathname.match(/^\/invite\/([a-f0-9]+)$/);
+const INVITE_TOKEN = INVITE_MATCH ? INVITE_MATCH[1] : null;
+
 let state = {
   vehicles: [],
   documents: [],
@@ -553,6 +706,12 @@ let state = {
   historyList: [],
   usersList: [],
   userFormMsg: "",
+  invitesList: [],
+  inviteLinkMsg: "",
+  inviteGeneratedUrl: "",
+  inviteInfo: null,
+  inviteError: "",
+  inviteChecking: !!INVITE_TOKEN,
   pendingUnlocks: [],
   bulkSelectedIds: [],
   bulkSearch: "",
@@ -766,6 +925,16 @@ async function loadUsers(){
   render();
 }
 
+async function loadInvites(){
+  try{
+    const res = await fetch('/api/invites', { headers: authHeaders() });
+    if(res.ok){ state.invitesList = (await res.json()).invites || []; }
+  }catch(e){
+    console.error("Erreur de chargement des invitations", e);
+  }
+  render();
+}
+
 async function loadPresence(){
   try{
     const res = await fetch('/api/presence', { headers: authHeaders() });
@@ -799,7 +968,7 @@ function setTab(tab){
   render();
   if(tab === "maj-groupee" && !state.bulkDocType){ state.bulkDocType = state.docTypes[0] || ""; render(); }
   if(tab === "sauvegarde") loadOnedriveStatus();
-  if(tab === "utilisateurs") loadUsers();
+  if(tab === "utilisateurs"){ loadUsers(); loadInvites(); }
   if(tab === "presence") loadPresence();
   if(tab === "historique") loadHistory();
 }
@@ -872,6 +1041,11 @@ function fmtMontant(n){
 
 function render(){
   const root = document.getElementById('root');
+  if(INVITE_TOKEN && !state.currentUser){
+    root.innerHTML = renderInviteScreen();
+    attachInviteHandlers();
+    return;
+  }
   if(state.authChecking){
     root.innerHTML = `<div class="login-screen"><p class="loading" style="color:#C7CCD6;">Connexion…</p></div>`;
     return;
@@ -890,9 +1064,96 @@ function render(){
   attachHandlers();
 }
 
+function renderLoginArt(){
+  return `
+    <svg class="login-art" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#131A23"/>
+          <stop offset="100%" stop-color="#1B2430"/>
+        </linearGradient>
+        <linearGradient id="busGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#3E8B77"/>
+          <stop offset="100%" stop-color="#1E4F42"/>
+        </linearGradient>
+        <linearGradient id="miniGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#E0A84E"/>
+          <stop offset="100%" stop-color="#8A5D1B"/>
+        </linearGradient>
+        <linearGradient id="truckCabGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#3A4356"/>
+          <stop offset="100%" stop-color="#1B2430"/>
+        </linearGradient>
+        <linearGradient id="truckBoxGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#F1EFE8"/>
+          <stop offset="100%" stop-color="#D8D4C7"/>
+        </linearGradient>
+        <radialGradient id="shadowGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#000000" stop-opacity="0.35"/>
+          <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+
+      <rect width="1600" height="900" fill="url(#skyGrad)"/>
+      <path d="M0,620 Q200,560 400,610 T800,600 T1200,615 T1600,600 L1600,900 L0,900 Z" fill="#22303B" opacity="0.5"/>
+
+      <polygon points="450,900 1150,900 900,640 700,640" fill="#232B36"/>
+      <line x1="800" y1="900" x2="800" y2="640" stroke="#F1EFE8" stroke-width="6" stroke-dasharray="24 20" opacity="0.4"/>
+
+      <!-- camion (arrière-plan) -->
+      <g transform="translate(310,560) scale(0.62)">
+        <ellipse cx="140" cy="185" rx="160" ry="18" fill="url(#shadowGrad)"/>
+        <rect x="0" y="60" width="220" height="110" rx="10" fill="url(#truckBoxGrad)"/>
+        <rect x="0" y="60" width="220" height="18" rx="8" fill="#FFFFFF" opacity="0.5"/>
+        <rect x="220" y="85" width="70" height="85" rx="10" fill="url(#truckCabGrad)"/>
+        <rect x="232" y="98" width="42" height="30" rx="4" fill="#9FD3C7" opacity="0.8"/>
+        <circle cx="55" cy="178" r="26" fill="#101620"/>
+        <circle cx="55" cy="178" r="11" fill="#5B6270"/>
+        <circle cx="165" cy="178" r="26" fill="#101620"/>
+        <circle cx="165" cy="178" r="11" fill="#5B6270"/>
+        <circle cx="260" cy="178" r="26" fill="#101620"/>
+        <circle cx="260" cy="178" r="11" fill="#5B6270"/>
+        <rect x="284" y="95" width="6" height="16" rx="2" fill="#C98A2C"/>
+      </g>
+
+      <!-- minibus -->
+      <g transform="translate(870,520) scale(0.78)">
+        <ellipse cx="120" cy="170" rx="150" ry="17" fill="url(#shadowGrad)"/>
+        <rect x="0" y="55" width="240" height="100" rx="24" fill="url(#miniGrad)"/>
+        <rect x="14" y="70" width="46" height="34" rx="6" fill="#F1EFE8" opacity="0.85"/>
+        <rect x="70" y="70" width="46" height="34" rx="6" fill="#F1EFE8" opacity="0.85"/>
+        <rect x="126" y="70" width="46" height="34" rx="6" fill="#F1EFE8" opacity="0.85"/>
+        <rect x="182" y="70" width="40" height="34" rx="6" fill="#F1EFE8" opacity="0.85"/>
+        <circle cx="55" cy="160" r="24" fill="#101620"/>
+        <circle cx="55" cy="160" r="10" fill="#5B6270"/>
+        <circle cx="185" cy="160" r="24" fill="#101620"/>
+        <circle cx="185" cy="160" r="10" fill="#5B6270"/>
+      </g>
+
+      <!-- bus (premier plan) -->
+      <g transform="translate(560,610) scale(1)">
+        <ellipse cx="180" cy="235" rx="220" ry="22" fill="url(#shadowGrad)"/>
+        <rect x="0" y="70" width="360" height="150" rx="30" fill="url(#busGrad)"/>
+        <rect x="0" y="70" width="360" height="22" rx="14" fill="#FFFFFF" opacity="0.35"/>
+        <rect x="20" y="100" width="60" height="46" rx="8" fill="#DCEAE5"/>
+        <rect x="92" y="100" width="60" height="46" rx="8" fill="#DCEAE5"/>
+        <rect x="164" y="100" width="60" height="46" rx="8" fill="#DCEAE5"/>
+        <rect x="236" y="100" width="60" height="46" rx="8" fill="#DCEAE5"/>
+        <rect x="308" y="100" width="34" height="46" rx="8" fill="#DCEAE5"/>
+        <rect x="0" y="160" width="360" height="14" fill="#C98A2C" opacity="0.85"/>
+        <circle cx="80" cy="228" r="34" fill="#101620"/>
+        <circle cx="80" cy="228" r="15" fill="#5B6270"/>
+        <circle cx="280" cy="228" r="34" fill="#101620"/>
+        <circle cx="280" cy="228" r="15" fill="#5B6270"/>
+      </g>
+    </svg>
+  `;
+}
+
 function renderLogin(){
   return `
     <div class="login-screen">
+      ${renderLoginArt()}
       <div class="login-card">
         <div class="brand">Flotte<br><small style="color:var(--ink-soft);">Suivi documentaire</small></div>
         <p>Connectez-vous avec votre compte personnel.</p>
@@ -934,6 +1195,105 @@ function attachLoginHandlers(){
       }else{
         state.loginError = "Identifiant ou mot de passe incorrect.";
         render();
+      }
+    });
+  }
+}
+
+function renderInviteScreen(){
+  if(state.inviteChecking){
+    return `<div class="login-screen"><p class="loading" style="color:#C7CCD6;">Vérification de l'invitation…</p></div>`;
+  }
+  if(state.inviteError){
+    return `
+      <div class="login-screen">
+        ${renderLoginArt()}
+        <div class="login-card">
+          <div class="brand">Flotte<br><small style="color:var(--ink-soft);">Suivi documentaire</small></div>
+          <p class="login-error">${escapeHtml(state.inviteError)}</p>
+          <p style="color:var(--ink-soft); font-size:13.5px;">Demandez à l'administrateur de vous envoyer un nouveau lien d'invitation.</p>
+        </div>
+      </div>
+    `;
+  }
+  const roleLabel = state.inviteInfo.isAdmin ? "Administrateur" : (state.inviteInfo.canEdit ? "Consultation et modification" : "Consultation seule");
+  return `
+    <div class="login-screen">
+      ${renderLoginArt()}
+      <div class="login-card">
+        <div class="brand">Flotte<br><small style="color:var(--ink-soft);">Suivi documentaire</small></div>
+        <p>Vous avez été invité(e) à rejoindre le système avec le rôle : <strong>${escapeHtml(roleLabel)}</strong>. Créez votre compte ci-dessous.</p>
+        ${state.loginError ? `<p class="login-error">${escapeHtml(state.loginError)}</p>` : ''}
+        <form id="invite-accept-form">
+          <div class="field">
+            <label>Votre nom</label>
+            <input type="text" name="name" required autofocus placeholder="Ex : Marie Ateba">
+          </div>
+          <div class="field">
+            <label>Identifiant souhaité</label>
+            <input type="text" name="username" required placeholder="Ex : marie">
+          </div>
+          <div class="field">
+            <label>Mot de passe</label>
+            <input type="password" name="password" required>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Créer mon compte</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+}
+
+async function checkInviteToken(){
+  try{
+    const res = await fetch('/api/invite-info/' + INVITE_TOKEN);
+    if(res.ok){
+      state.inviteInfo = await res.json();
+    }else{
+      const data = await res.json().catch(() => ({}));
+      state.inviteError = data.error || "Cette invitation n'est plus valide.";
+    }
+  }catch(e){
+    state.inviteError = "Erreur de vérification de l'invitation.";
+  }
+  state.inviteChecking = false;
+  render();
+}
+
+function attachInviteHandlers(){
+  const form = document.getElementById('invite-accept-form');
+  if(form){
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      const name = fd.get('name').trim();
+      const username = fd.get('username').trim();
+      const password = fd.get('password');
+      try{
+        const res = await fetch('/api/invite-accept', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: INVITE_TOKEN, name, username, password })
+        });
+        const data = await res.json();
+        if(data.ok){
+          localStorage.setItem('flotte-creds', JSON.stringify({ username, password }));
+          window.history.replaceState({}, '', '/');
+          state.currentUser = data.user;
+          state.authChecking = true;
+          render();
+          await loadData();
+        }else{
+          state.loginError = data.error || "Erreur lors de la création du compte.";
+          render();
+          attachInviteHandlers();
+        }
+      }catch(e){
+        state.loginError = "Erreur lors de la création du compte.";
+        render();
+        attachInviteHandlers();
       }
     });
   }
@@ -1033,21 +1393,57 @@ function renderDashboard(){
     );
   }
 
+  const categoryStats = statsByCategory();
+  const maxCategory = Math.max(1, ...categoryStats.map(c => c.count));
+
   return `
-    <div class="page-head">
+    <div class="dash-hero">
       <div>
+        <p class="dash-hero-eyebrow">${new Date().toLocaleDateString('fr-FR',{weekday:'long', day:'2-digit', month:'long', year:'numeric'})}</p>
         <h1>Tableau de bord</h1>
-        <p>Vue d'ensemble des échéances documentaires de la flotte.</p>
+        <p class="dash-hero-sub">${state.vehicles.length} véhicule${state.vehicles.length!==1?'s':''} · ${state.documents.length} document${state.documents.length!==1?'s':''} suivis</p>
       </div>
-      <div class="today-chip">${new Date().toLocaleDateString('fr-FR',{weekday:'long', day:'2-digit', month:'long', year:'numeric'})}</div>
+      ${canEdit() ? `
+      <div class="dash-hero-actions">
+        <button class="btn btn-primary" data-quick-nav="ajouter-vehicule">+ Véhicule</button>
+        <button class="btn dash-hero-btn-ghost" data-quick-nav="ajouter-document">+ Document</button>
+      </div>` : ''}
     </div>
 
-    <div class="stats">
-      <div class="stat-card"><div class="stat-num">${state.vehicles.length}</div><div class="stat-label">Véhicules</div></div>
-      <div class="stat-card valide"><div class="stat-num">${counts.valide}</div><div class="stat-label">Documents valides</div></div>
-      <div class="stat-card attention"><div class="stat-num">${counts.attention}</div><div class="stat-label">Expirent sous ${ALERT_WINDOW} j</div></div>
-      <div class="stat-card expire"><div class="stat-num">${counts.expire}</div><div class="stat-label">Documents expirés</div></div>
+    <div class="dash-grid">
+      <div class="section dash-donut-card">
+        <div class="section-head"><h2>Statut des documents</h2></div>
+        <div class="dash-donut-wrap">
+          ${renderDonutChart(counts)}
+          <div class="dash-legend">
+            <div class="dash-legend-row"><span class="xl-swatch" style="background:var(--teal)"></span>Valides<strong>${counts.valide}</strong></div>
+            <div class="dash-legend-row"><span class="xl-swatch" style="background:var(--amber)"></span>Bientôt expirés<strong>${counts.attention}</strong></div>
+            <div class="dash-legend-row"><span class="xl-swatch" style="background:var(--red)"></span>Expirés<strong>${counts.expire}</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-mini">
+        <div class="stat-card"><div class="stat-icon">${ICON_TRUCK}</div><div class="stat-num">${state.vehicles.length}</div><div class="stat-label">Véhicules</div></div>
+        <div class="stat-card valide"><div class="stat-icon">${ICON_CHECK}</div><div class="stat-num">${counts.valide}</div><div class="stat-label">Documents valides</div></div>
+        <div class="stat-card attention"><div class="stat-icon">${ICON_ALERT}</div><div class="stat-num">${counts.attention}</div><div class="stat-label">Expirent sous ${ALERT_WINDOW} j</div></div>
+        <div class="stat-card expire"><div class="stat-icon">${ICON_X}</div><div class="stat-num">${counts.expire}</div><div class="stat-label">Documents expirés</div></div>
+      </div>
     </div>
+
+    ${categoryStats.length > 0 ? `
+    <div class="section">
+      <div class="section-head"><h2>Véhicules par catégorie</h2></div>
+      <div class="cat-bars">
+        ${categoryStats.map(c => `
+          <div class="cat-bar-row">
+            <span class="cat-bar-label">${escapeHtml(c.label)}</span>
+            <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${Math.round((c.count/maxCategory)*100)}%;"></div></div>
+            <span class="cat-bar-count">${c.count}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>` : ''}
 
     <div class="section">
       <div class="section-head">
@@ -1847,7 +2243,59 @@ function renderUtilisateurs(){
     </div>
 
     <div class="section">
-      <div class="section-head"><h2>Ajouter un utilisateur</h2></div>
+      <div class="section-head"><h2>Créer un lien d'invitation</h2></div>
+      <p class="hint" style="margin-top:0;">La personne invitée choisit elle-même son identifiant et son mot de passe en ouvrant le lien — pratique pour ne pas avoir à transmettre un mot de passe.</p>
+      <form id="invite-form">
+        <div class="form-grid">
+          <div class="field">
+            <label>Rôle</label>
+            <select name="role" id="invite-role-select">
+              <option value="viewer">Consultation seule</option>
+              <option value="editor" selected>Consultation et modification</option>
+              <option value="admin">Administrateur (accès complet + suivi)</option>
+            </select>
+          </div>
+          <div class="field span-2" id="invite-pages-field">
+            <label>Pages accessibles (pour un rôle non-administrateur)</label>
+            <div class="radio-row">
+              ${ALL_PAGE_KEYS.map(([key,label]) => `<label><input type="checkbox" name="invitePages" value="${key}" checked> ${label}</label>`).join('')}
+            </div>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Générer le lien</button>
+        </div>
+      </form>
+      ${state.inviteGeneratedUrl ? `
+        <div class="form-actions" style="margin-top:16px;">
+          <input class="search" readonly id="invite-link-output" value="${escapeAttr(state.inviteGeneratedUrl)}" style="width:100%; max-width:420px;">
+          <button class="btn btn-ghost" id="copy-invite-link-btn">Copier</button>
+        </div>
+        ${state.inviteLinkMsg ? `<p class="form-msg" style="margin-top:8px;">${escapeHtml(state.inviteLinkMsg)}</p>` : ''}
+      ` : ''}
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>Invitations en attente</h2></div>
+      ${state.invitesList.filter(i => !i.used).length === 0 ? `<p class="no-docs">Aucune invitation en attente.</p>` :
+      `<div class="vehicle-docs">
+        ${state.invitesList.filter(i => !i.used).map(i => `
+          <div class="doc-line">
+            <div class="doc-line-left">
+              <span class="doc-type">${i.isAdmin ? 'Administrateur' : (i.canEdit ? 'Consultation et modification' : 'Consultation seule')}</span>
+              <span class="doc-date">Créée par ${escapeHtml(i.createdBy || '—')} · ${fmtDateTime(i.createdAt)}</span>
+            </div>
+            <div class="row-actions">
+              <button class="icon-btn danger" data-revoke-invite="${i.token}">Révoquer</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>`}
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>Ajouter un utilisateur directement</h2></div>
+      <p class="hint" style="margin-top:0;">Alternative au lien d'invitation : créez vous-même le compte avec un mot de passe que vous transmettez à la personne.</p>
       <form id="user-form">
         <div class="form-grid">
           <div class="field">
@@ -1896,6 +2344,7 @@ function renderUtilisateurs(){
               ${!u.isAdmin ? `<span class="doc-date">Pages : ${(u.allowedPages||[]).length === ALL_PAGE_KEYS.length ? 'Toutes' : (u.allowedPages||[]).map(k => (ALL_PAGE_KEYS.find(p=>p[0]===k)||[k,k])[1]).join(', ') || 'Aucune'}</span>` : ''}
             </div>
             <div class="row-actions">
+              <button class="icon-btn" data-reset-password="${escapeAttr(u.username)}">Réinitialiser le mot de passe</button>
               ${state.currentUser && state.currentUser.username !== u.username ? `<button class="icon-btn danger" data-delete-user="${escapeAttr(u.username)}">Supprimer</button>` : `<span class="doc-date">Vous</span>`}
             </div>
           </div>
@@ -1972,7 +2421,7 @@ function renderSauvegarde(){
         <p class="no-docs">OneDrive n'est pas encore configuré sur ce serveur. Un administrateur doit renseigner les identifiants Microsoft (voir la section OneDrive du README du projet), puis redéployer le serveur.</p>
       ` : od.connected ? `
         <p style="margin-bottom:16px;"><span class="badge valide"><span class="badge-dot"></span>Connecté à OneDrive</span></p>
-        <p class="no-docs" style="margin-bottom:16px;">Les sauvegardes sont déposées dans le dossier de l'application sur votre OneDrive (Apps → nom de l'application), sous le nom <strong>flotte-backup.json</strong>.</p>
+        <p class="no-docs" style="margin-bottom:16px;">Les sauvegardes (véhicules, documents, comptes utilisateurs, historique) sont déposées dans le dossier de l'application sur votre OneDrive (Apps → nom de l'application), sous le nom <strong>flotte-backup.json</strong>. Elles sont restaurées automatiquement à chaque démarrage du serveur si la connexion OneDrive est active — pratique après une mise à jour du système.</p>
         <div class="form-actions" style="margin-top:0;">
           <button class="btn btn-primary" id="backup-now-btn">Sauvegarder maintenant</button>
           <button class="btn btn-ghost" id="onedrive-disconnect-btn">Déconnecter</button>
@@ -2018,6 +2467,10 @@ function attachHandlers(){
 
   document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => setTab(btn.dataset.tab));
+  });
+
+  document.querySelectorAll('[data-quick-nav]').forEach(btn => {
+    btn.addEventListener('click', () => setTab(btn.dataset.quickNav));
   });
 
   const searchInput = document.getElementById('search-input');
@@ -2523,6 +2976,69 @@ function attachHandlers(){
     });
   }
 
+  const inviteRoleSelect = document.getElementById('invite-role-select');
+  const invitePagesField = document.getElementById('invite-pages-field');
+  if(inviteRoleSelect && invitePagesField){
+    const syncInvitePagesVisibility = () => {
+      invitePagesField.style.display = inviteRoleSelect.value === 'admin' ? 'none' : 'flex';
+    };
+    syncInvitePagesVisibility();
+    inviteRoleSelect.addEventListener('change', syncInvitePagesVisibility);
+  }
+
+  const inviteForm = document.getElementById('invite-form');
+  if(inviteForm){
+    inviteForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(inviteForm);
+      const role = fd.get('role');
+      const payload = {
+        isAdmin: role === 'admin',
+        canEdit: role !== 'viewer',
+        allowedPages: fd.getAll('invitePages'),
+      };
+      try{
+        const res = await fetch('/api/invites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if(data.ok){
+          state.inviteGeneratedUrl = window.location.origin + data.path;
+          state.inviteLinkMsg = "";
+        }
+      }catch(e){
+        state.inviteLinkMsg = "Erreur lors de la génération du lien.";
+      }
+      await loadInvites();
+    });
+  }
+
+  const copyInviteLinkBtn = document.getElementById('copy-invite-link-btn');
+  if(copyInviteLinkBtn){
+    copyInviteLinkBtn.addEventListener('click', async () => {
+      const input = document.getElementById('invite-link-output');
+      try{
+        await navigator.clipboard.writeText(state.inviteGeneratedUrl);
+        state.inviteLinkMsg = "Lien copié.";
+      }catch(e){
+        if(input){ input.select(); }
+        state.inviteLinkMsg = "Sélectionnez et copiez le lien manuellement.";
+      }
+      render();
+    });
+  }
+
+  document.querySelectorAll('[data-revoke-invite]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const token = btn.dataset.revokeInvite;
+      if(!confirm("Révoquer cette invitation ? Le lien ne fonctionnera plus.")) return;
+      await fetch('/api/invites/' + token, { method: 'DELETE', headers: authHeaders() });
+      await loadInvites();
+    });
+  });
+
   const userRoleSelect = document.getElementById('user-role-select');
   const userPagesField = document.getElementById('user-pages-field');
   if(userRoleSelect && userPagesField){
@@ -2562,6 +3078,27 @@ function attachHandlers(){
     });
   }
 
+  document.querySelectorAll('[data-reset-password]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const username = btn.dataset.resetPassword;
+      const newPassword = window.prompt(`Nouveau mot de passe pour @${username} :`);
+      if(!newPassword) return;
+      const confirmPassword = window.prompt("Confirmez le nouveau mot de passe :");
+      if(newPassword !== confirmPassword){ alert("Les mots de passe ne correspondent pas."); return; }
+      const res = await fetch('/api/users/' + encodeURIComponent(username) + '/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ password: newPassword })
+      });
+      const data = await res.json();
+      if(data.ok){
+        alert(`Mot de passe réinitialisé pour @${username}. Transmettez-le lui en toute sécurité.`);
+      }else{
+        alert(data.error || "Erreur lors de la réinitialisation.");
+      }
+    });
+  });
+
   document.querySelectorAll('[data-delete-user]').forEach(btn => {
     btn.addEventListener('click', async () => {
       const username = btn.dataset.deleteUser;
@@ -2576,7 +3113,9 @@ function attachHandlers(){
 
 /* ---------- INIT ---------- */
 render();
-if(getCreds().username){
+if(INVITE_TOKEN){
+  checkInviteToken();
+}else if(getCreds().username){
   loadData();
 }else{
   state.authChecking = false;
