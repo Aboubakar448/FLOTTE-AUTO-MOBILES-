@@ -6,16 +6,22 @@ const users = require('./users');
 const history = require('./history');
 const { computeDiff } = require('./history-diff');
 const lock = require('./lock');
+const invites = require('./invites');
 
 const app = express();
 app.use(express.json({ limit: '5mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.get('/invite/:token', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 const DATA_FILE = path.join(__dirname, 'data.json');
 const DEFAULT_DOC_TYPES = ["Carte grise", "Carte bleue", "Assurance", "Licence de transport", "Conformité fiscale"];
-const ONLINE_WINDOW_MS = 90 * 1000;
+const ONLINE_WINDOW_MS = 90 * 1000; // considéré "en ligne" si vu il y a moins de 90s
 
-const presence = new Map();
+// présence en mémoire uniquement (redémarre à zéro si le serveur redémarre)
+const presence = new Map(); // username -> { name, lastSeen }
 
 function touchPresence(user) {
   presence.set(user.username, { name: user.name, lastSeen: Date.now() });
@@ -56,6 +62,8 @@ function requireAdmin(req, res, next) {
   next();
 }
 
+// ---- Connexion ----
+
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body || {};
   const user = users.findUser(username, password);
@@ -72,6 +80,8 @@ app.get('/api/me', checkAuth, (req, res) => {
   res.json({ user: { name: req.user.name, username: req.user.username, isAdmin: !!req.user.isAdmin, canEdit: req.user.canEdit, allowedPages: req.user.allowedPages } });
 });
 
+// ---- Données ----
+
 app.get('/api/data', checkAuth, (req, res) => {
   res.json(readData());
 });
@@ -81,6 +91,22 @@ function requireCanEdit(req, res, next) {
     return res.status(403).json({ error: 'forbidden', message: 'Votre compte est en consultation seule.' });
   }
   next();
+}
+
+async function syncToOneDrive() {
+  if (!onedrive.isConfigured() || !onedrive.isConnected()) return 'skipped';
+  try {
+    await onedrive.uploadBackup({
+      data: readData(),
+      users: users.loadUsers(),
+      history: history.loadHistory(),
+      invites: invites.listInvites(),
+    });
+    return 'ok';
+  } catch (e) {
+    console.error('Erreur de sauvegarde OneDrive :', e.message);
+    return 'error';
+  }
 }
 
 app.put('/api/data', checkAuth, requireCanEdit, async (req, res) => {
@@ -101,45 +127,57 @@ app.put('/api/data', checkAuth, requireCanEdit, async (req, res) => {
   const diffEntries = computeDiff(oldData, saved).map(e => ({ ...e, username: req.user.name }));
   history.appendHistory(diffEntries);
 
-  let onedriveBackup = 'skipped';
-  if (onedrive.isConfigured() && onedrive.isConnected()) {
-    try {
-      await onedrive.uploadBackup(saved);
-      onedriveBackup = 'ok';
-    } catch (e) {
-      onedriveBackup = 'error';
-      console.error('Erreur de sauvegarde OneDrive :', e.message);
-    }
-  }
+  const onedriveBackup = await syncToOneDrive();
   res.json({ ok: true, saved, onedriveBackup });
 });
+
+// ---- Utilisateurs (admin uniquement) ----
 
 app.get('/api/users', checkAuth, requireAdmin, (req, res) => {
   res.json({ users: users.publicUsers() });
 });
 
-app.post('/api/users', checkAuth, requireAdmin, (req, res) => {
+app.post('/api/users', checkAuth, requireAdmin, async (req, res) => {
   try {
     const { name, username, password, isAdmin, canEdit, allowedPages } = req.body || {};
     if (!name || !username || !password) {
       return res.status(400).json({ error: 'Nom, identifiant et mot de passe sont requis.' });
     }
     const user = users.addUser({ name, username, password, isAdmin, canEdit, allowedPages });
+    await syncToOneDrive();
     res.json({ ok: true, user: { name: user.name, username: user.username, isAdmin: !!user.isAdmin, canEdit: user.canEdit, allowedPages: user.allowedPages } });
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
 });
 
-app.delete('/api/users/:username', checkAuth, requireAdmin, (req, res) => {
+app.delete('/api/users/:username', checkAuth, requireAdmin, async (req, res) => {
   try {
     users.removeUser(req.params.username);
     presence.delete(req.params.username);
+    await syncToOneDrive();
     res.json({ ok: true });
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
 });
+
+app.post('/api/users/:username/reset-password', checkAuth, requireAdmin, async (req, res) => {
+  try {
+    const { password } = req.body || {};
+    if (!password || password.length < 1) {
+      return res.status(400).json({ error: 'Nouveau mot de passe requis.' });
+    }
+    users.setPassword(req.params.username, password);
+    history.appendHistory([{ action: 'user_password_reset', summary: `Mot de passe réinitialisé pour @${req.params.username}`, username: req.user.name }]);
+    await syncToOneDrive();
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+// ---- Présence (admin uniquement) ----
 
 app.get('/api/presence', checkAuth, requireAdmin, (req, res) => {
   const now = Date.now();
@@ -154,10 +192,14 @@ app.get('/api/presence', checkAuth, requireAdmin, (req, res) => {
   res.json({ users: list });
 });
 
+// ---- Historique des modifications (admin uniquement) ----
+
 app.get('/api/history', checkAuth, requireAdmin, (req, res) => {
   const limit = Math.min(parseInt(req.query.limit, 10) || 100, 500);
   res.json({ history: history.loadHistory().slice(0, limit) });
 });
+
+// ---- OneDrive : connexion et sauvegarde ----
 
 app.get('/auth/onedrive/login', (req, res) => {
   if (!onedrive.isConfigured()) {
@@ -186,18 +228,63 @@ app.get('/api/onedrive/status', checkAuth, (req, res) => {
 });
 
 app.post('/api/onedrive/backup-now', checkAuth, requireAdmin, async (req, res) => {
-  try {
-    await onedrive.uploadBackup(readData());
-    res.json({ ok: true });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
-  }
+  const result = await syncToOneDrive();
+  if (result === 'ok') return res.json({ ok: true });
+  res.status(500).json({ ok: false, error: result === 'skipped' ? 'OneDrive non connecté.' : 'Échec de la sauvegarde.' });
 });
 
 app.post('/api/onedrive/disconnect', checkAuth, requireAdmin, (req, res) => {
   onedrive.disconnect();
   res.json({ ok: true });
 });
+
+// ---- Invitations (créer un lien pour qu'une personne crée elle-même son compte) ----
+
+app.post('/api/invites', checkAuth, requireAdmin, async (req, res) => {
+  const { isAdmin, canEdit, allowedPages } = req.body || {};
+  const invite = invites.createInvite({ isAdmin, canEdit, allowedPages, createdBy: req.user.name });
+  await syncToOneDrive();
+  res.json({ ok: true, token: invite.token, path: `/invite/${invite.token}` });
+});
+
+app.get('/api/invites', checkAuth, requireAdmin, (req, res) => {
+  res.json({ invites: invites.listInvites() });
+});
+
+app.delete('/api/invites/:token', checkAuth, requireAdmin, async (req, res) => {
+  invites.revokeInvite(req.params.token);
+  await syncToOneDrive();
+  res.json({ ok: true });
+});
+
+app.get('/api/invite-info/:token', (req, res) => {
+  const invite = invites.getInvite(req.params.token);
+  if (!invite || invite.used) {
+    return res.status(404).json({ error: 'Cette invitation est introuvable ou a déjà été utilisée.' });
+  }
+  res.json({ ok: true, isAdmin: invite.isAdmin, canEdit: invite.canEdit, allowedPages: invite.allowedPages });
+});
+
+app.post('/api/invite-accept', async (req, res) => {
+  const { token, name, username, password } = req.body || {};
+  const invite = invites.getInvite(token);
+  if (!invite || invite.used) {
+    return res.status(400).json({ error: 'Cette invitation est introuvable ou a déjà été utilisée.' });
+  }
+  if (!name || !username || !password) {
+    return res.status(400).json({ error: 'Nom, identifiant et mot de passe sont requis.' });
+  }
+  try {
+    const user = users.addUser({ name, username, password, isAdmin: invite.isAdmin, canEdit: invite.canEdit, allowedPages: invite.allowedPages });
+    invites.markUsed(token, username);
+    await syncToOneDrive();
+    res.json({ ok: true, user: { name: user.name, username: user.username, isAdmin: !!user.isAdmin, canEdit: user.canEdit, allowedPages: user.allowedPages } });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+// ---- Protection par mot de passe de fiches individuelles ----
 
 app.post('/api/unlock-check', checkAuth, (req, res) => {
   const { kind, id, password } = req.body || {};
@@ -207,7 +294,7 @@ app.post('/api/unlock-check', checkAuth, (req, res) => {
   res.json({ ok: lock.checkPassword(record, password) });
 });
 
-app.post('/api/lock', checkAuth, requireAdmin, (req, res) => {
+app.post('/api/lock', checkAuth, requireAdmin, async (req, res) => {
   const { kind, id, password } = req.body || {};
   if (!password) return res.status(400).json({ error: 'Mot de passe requis.' });
   const data = readData();
@@ -216,10 +303,11 @@ app.post('/api/lock', checkAuth, requireAdmin, (req, res) => {
   record.verrou = { locked: true, passwordHash: lock.hashPassword(password) };
   writeData(data);
   history.appendHistory([{ action: `${kind}_lock`, summary: `${lock.labelFor(kind, record)} — protégé par mot de passe`, username: req.user.name }]);
+  await syncToOneDrive();
   res.json({ ok: true });
 });
 
-app.post('/api/unlock-remove', checkAuth, requireAdmin, (req, res) => {
+app.post('/api/unlock-remove', checkAuth, requireAdmin, async (req, res) => {
   const { kind, id, password } = req.body || {};
   const data = readData();
   const record = lock.findRecord(data, kind, id);
@@ -230,10 +318,29 @@ app.post('/api/unlock-remove', checkAuth, requireAdmin, (req, res) => {
   record.verrou = { locked: false, passwordHash: null };
   writeData(data);
   history.appendHistory([{ action: `${kind}_unlock`, summary: `${lock.labelFor(kind, record)} — protection retirée`, username: req.user.name }]);
+  await syncToOneDrive();
   res.json({ ok: true });
 });
 
+async function restoreFromOneDriveOnBoot() {
+  if (!onedrive.isConfigured() || !onedrive.isConnected()) return;
+  try {
+    const backup = await onedrive.downloadBackup();
+    if (backup) {
+      if (backup.data) writeData(backup.data);
+      if (backup.users) users.saveUsers(backup.users);
+      if (backup.history) history.overwriteHistory(backup.history);
+      if (backup.invites) invites.saveInvites(backup.invites);
+      console.log('Données restaurées depuis OneDrive au démarrage.');
+    }
+  } catch (e) {
+    console.error('Erreur de restauration OneDrive au démarrage :', e.message);
+  }
+}
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Serveur de gestion de flotte démarré sur le port ${PORT}`);
+restoreFromOneDriveOnBoot().finally(() => {
+  app.listen(PORT, () => {
+    console.log(`Serveur de gestion de flotte démarré sur le port ${PORT}`);
+  });
 });
